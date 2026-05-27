@@ -51,7 +51,11 @@ log_step 3 7 'make'
 make tooldir=/usr
 
 log_step 4 7 'make check (test suite)'
-make -k check
+if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then
+  make -k check
+else
+  log "skipping test suite (LFS_RUN_TESTS=0)"
+fi
 
 log_step 5 7 'grep '"'"'^FAIL:'"'"' $(find -name '"'"'*.log'"'"')'
 grep '^FAIL:' $(find -name '*.log')

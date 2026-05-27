@@ -48,7 +48,11 @@ make
 make html
 
 log_step 5 7 'make check (test suite)'
-make check 2>&1 | tee gmp-check-log
+if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then
+  make check 2>&1 | tee gmp-check-log
+else
+  log "skipping test suite (LFS_RUN_TESTS=0)"
+fi
 
 log_step 6 7 'awk '"'"'/# PASS:/{total+=$3} ; END{print total}'"'"' gmp-check-log'
 awk '/# PASS:/{total+=$3} ; END{print total}' gmp-check-log

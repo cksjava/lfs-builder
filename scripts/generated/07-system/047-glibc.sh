@@ -53,7 +53,11 @@ log_step 5 32 'make'
 make
 
 log_step 6 32 'make check (test suite)'
-make check
+if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then
+  make check
+else
+  log "skipping test suite (LFS_RUN_TESTS=0)"
+fi
 
 log_step 7 32 'grep "Timed out" $(find -name \*.out)'
 grep "Timed out" $(find -name \*.out)

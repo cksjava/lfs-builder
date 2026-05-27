@@ -19,13 +19,8 @@ if [ ! -b "${LFS_DEVICE}" ]; then
 fi
 
 log_step 2 5 "create filesystem if needed"
-fs_type="$(blkid -o value -s TYPE "${LFS_DEVICE}" 2>/dev/null || true)"
-if [ "${fs_type}" != "${LFS_FILESYSTEM}" ]; then
-  if [ -n "${fs_type}" ]; then
-    log "Found ${fs_type} on ${LFS_DEVICE}; reformatting as ${LFS_FILESYSTEM}"
-  else
-    log "No filesystem on ${LFS_DEVICE}; creating ${LFS_FILESYSTEM}"
-  fi
+if [[ "${LFS_FORCE_FORMAT:-0}" == "1" ]]; then
+  log "Fresh build — formatting ${LFS_DEVICE} as ${LFS_FILESYSTEM}"
   case "${LFS_FILESYSTEM}" in
     ext4) mkfs.ext4 -F "${LFS_DEVICE}" ;;
     ext3) mkfs.ext3 -F "${LFS_DEVICE}" ;;
@@ -33,6 +28,24 @@ if [ "${fs_type}" != "${LFS_FILESYSTEM}" ]; then
     btrfs) mkfs.btrfs -f "${LFS_DEVICE}" ;;
     *) die "Unsupported filesystem: ${LFS_FILESYSTEM}" ;;
   esac
+else
+  fs_type="$(blkid -o value -s TYPE "${LFS_DEVICE}" 2>/dev/null || true)"
+  if [ "${fs_type}" != "${LFS_FILESYSTEM}" ]; then
+    if [ -n "${fs_type}" ]; then
+      log "Found ${fs_type} on ${LFS_DEVICE}; reformatting as ${LFS_FILESYSTEM}"
+    else
+      log "No filesystem on ${LFS_DEVICE}; creating ${LFS_FILESYSTEM}"
+    fi
+    case "${LFS_FILESYSTEM}" in
+      ext4) mkfs.ext4 -F "${LFS_DEVICE}" ;;
+      ext3) mkfs.ext3 -F "${LFS_DEVICE}" ;;
+      xfs)  mkfs.xfs -f "${LFS_DEVICE}" ;;
+      btrfs) mkfs.btrfs -f "${LFS_DEVICE}" ;;
+      *) die "Unsupported filesystem: ${LFS_FILESYSTEM}" ;;
+    esac
+  else
+    log "Keeping existing ${fs_type} on ${LFS_DEVICE} (resume mode)"
+  fi
 fi
 
 log_step 3 5 "mount LFS partition at ${LFS_MOUNT}"

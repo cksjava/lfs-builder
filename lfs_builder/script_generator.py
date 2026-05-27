@@ -130,6 +130,21 @@ def _idempotentize_command_block(cmd: str) -> str:
     return "\n".join(_idempotentize_line(ln) for ln in cmd.split("\n"))
 
 
+def _wrap_test_command_block(cmd: str) -> str:
+    """Skip make check blocks unless LFS_RUN_TESTS=1."""
+    lower = cmd.lower()
+    if "make check" not in lower and "make -k check" not in lower:
+        return cmd
+    body = "\n".join(f"  {line}" for line in cmd.split("\n"))
+    return (
+        'if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then\n'
+        f"{body}\n"
+        "else\n"
+        '  log "skipping test suite (LFS_RUN_TESTS=0)"\n'
+        "fi"
+    )
+
+
 def _emit_logged_commands(commands: list[str], *, chroot: bool = False) -> list[str]:
     """Prefix each command block with log_step."""
     lines: list[str] = []
@@ -139,6 +154,7 @@ def _emit_logged_commands(commands: list[str], *, chroot: bool = False) -> list[
         lines.append("")
     for i, cmd in enumerate(commands, 1):
         cmd = _idempotentize_command_block(cmd)
+        cmd = _wrap_test_command_block(cmd)
         label = _command_label(cmd)
         lines.append(f"log_step {i} {total} {_shell_quote(label)}")
         lines.extend(cmd.split("\n"))

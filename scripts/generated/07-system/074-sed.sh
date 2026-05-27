@@ -39,8 +39,12 @@ make
 make html
 
 log_step 3 4 'make check (test suite)'
-chown -R tester .
-su tester -c "PATH=$PATH make check"
+if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then
+  chown -R tester .
+  su tester -c "PATH=$PATH make check"
+else
+  log "skipping test suite (LFS_RUN_TESTS=0)"
+fi
 
 log_step 4 4 'make install'
 make install

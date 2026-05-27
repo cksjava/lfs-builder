@@ -51,7 +51,8 @@ def main() -> int:
 Examples:
   %(prog)s                    # Interactive setup, then full build
   %(prog)s --resume           # Continue from last saved step
-  %(prog)s --cleanup          # Unmount LFS and clean up mounts
+  %(prog)s --cleanup          # Unmount LFS and virtual filesystems
+  %(prog)s --clean            # Alias for --cleanup
   %(prog)s -v                 # Verbose (show compiler output)
   %(prog)s --config work/lfs-config.json --resume
         """,
@@ -76,8 +77,10 @@ Examples:
     )
     parser.add_argument(
         "--cleanup",
+        "--clean",
         action="store_true",
-        help="Unmount virtual filesystems and LFS partition",
+        dest="cleanup",
+        help="Unmount virtual filesystems, LFS partition, and swap",
     )
     parser.add_argument(
         "--resume",
@@ -183,11 +186,20 @@ Examples:
     save_config(cfg, config_path)
 
     ensure_root()
-    start_step = args.from_step
-    if args.resume and start_step is None:
-        start_step = LFSOrchestrator(book, work_dir, cfg)._state.get("step_index", 0)
 
-    if start_step in (None, 0):
+    if args.resume:
+        start_step = args.from_step
+        orch = LFSOrchestrator(book, work_dir, cfg, force_format=False)
+        if start_step is None:
+            start_step = orch._state.get("step_index", 0)
+    else:
+        start_step = args.from_step if args.from_step is not None else 0
+        force_format = start_step == 0
+        orch = LFSOrchestrator(book, work_dir, cfg, force_format=force_format)
+        if args.from_step is None:
+            orch.reset_state()
+
+    if start_step in (None, 0) and not args.resume:
         if cfg.prepare_host and not args.skip_host_prepare:
             rc = run_host_prepare(scripts_dir, skip=False)
             if rc != 0:
@@ -196,7 +208,6 @@ Examples:
         if rc != 0:
             return rc
 
-    orch = LFSOrchestrator(book, work_dir, cfg)
     from_step = start_step
 
     try:

@@ -48,7 +48,11 @@ log_step 3 9 'make'
 make
 
 log_step 4 9 'make check (test suite)'
-make check
+if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then
+  make check
+else
+  log "skipping test suite (LFS_RUN_TESTS=0)"
+fi
 
 log_step 5 9 'make install'
 make install

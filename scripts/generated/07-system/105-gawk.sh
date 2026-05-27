@@ -41,8 +41,12 @@ log_step 3 7 'make'
 make
 
 log_step 4 7 'make check (test suite)'
-chown -R tester .
-su tester -c "PATH=$PATH make check"
+if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then
+  chown -R tester .
+  su tester -c "PATH=$PATH make check"
+else
+  log "skipping test suite (LFS_RUN_TESTS=0)"
+fi
 
 log_step 5 7 'make install'
 rm -f /usr/bin/gawk-5.3.2

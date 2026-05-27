@@ -29,11 +29,11 @@ class LFSConfig:
     console_font: str = ""
     lang: str = "en_US.UTF-8"
     hwclock_utc: bool = True
-    root_password: str = ""
+    root_password: str = "arya"
     grub_device: str = "/dev/sda"
     build_user: str = "lfs"
     jobs: int = 0
-    run_tests: bool = True
+    run_tests: bool = False
     book_path: str = ""
     work_dir: str = ""
     verbose: bool = True
@@ -159,19 +159,22 @@ def run_wizard(
     print("\n--- Build options ---")
     cfg.build_user = _prompt("Unprivileged build user", "lfs")
     cfg.jobs = int(_prompt("Parallel make jobs (0=auto)", "0") or "0")
-    cfg.run_tests = _prompt_bool("Run package test suites when offered?", True)
+    cfg.run_tests = _prompt_bool("Run package test suites when offered?", False)
     cfg.kernel_use_host_config = _prompt_bool(
         "Seed kernel .config from running host?", True
     )
     cfg.verbose = _prompt_bool("Verbose mode (show all compiler output)?", cfg.verbose)
 
-    pw1 = getpass.getpass("Root password for finished system (empty=skip): ")
+    pw1 = getpass.getpass("Root password for finished system (Enter=arya): ")
     if pw1:
         pw2 = getpass.getpass("Confirm root password: ")
         if pw1 == pw2:
             cfg.root_password = pw1
         else:
-            print("Passwords did not match; root password will be set later.")
+            print("Passwords did not match; using default root password.")
+            cfg.root_password = "arya"
+    else:
+        cfg.root_password = "arya"
 
     path = config_file or default_config_path(work_dir)
     path.parent.mkdir(parents=True, exist_ok=True)

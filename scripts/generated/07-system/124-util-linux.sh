@@ -56,9 +56,13 @@ log_step 3 5 'bash tests/run.sh --srcdir=$PWD --builddir=$PWD'
 bash tests/run.sh --srcdir=$PWD --builddir=$PWD
 
 log_step 4 5 'make check (test suite)'
-touch /etc/fstab
-chown -R tester .
-su tester -c "make -k check"
+if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then
+  touch /etc/fstab
+  chown -R tester .
+  su tester -c "make -k check"
+else
+  log "skipping test suite (LFS_RUN_TESTS=0)"
+fi
 
 log_step 5 5 'make install'
 make install

@@ -22,10 +22,13 @@ class LFSOrchestrator:
         book_path: Path,
         work_dir: Path,
         cfg: LFSConfig,
+        *,
+        force_format: bool = False,
     ):
         self.book_path = book_path
         self.work_dir = work_dir
         self.cfg = cfg
+        self.force_format = force_format
         self.scripts_dir = Path(__file__).resolve().parent.parent / "scripts"
         self.generated_dir = self.scripts_dir / "generated"
         self.state_file = work_dir / "build-state.json"
@@ -59,6 +62,12 @@ class LFSOrchestrator:
             encoding="utf-8",
         )
 
+    def reset_state(self) -> None:
+        """Clear saved build progress (fresh build from step 1)."""
+        self._state = {"step_index": 0, "completed": []}
+        if self.state_file.exists():
+            self.state_file.unlink()
+
     def _env_base(self) -> dict[str, str]:
         nproc = str(self.cfg.nproc)
         env = {
@@ -85,6 +94,8 @@ class LFSOrchestrator:
             "TESTSUITEFLAGS": f"-j{nproc}",
             "PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
             "LFS_BUILDER_SCRIPTS": str(self.scripts_dir),
+            "LFS_RUN_TESTS": "1" if self.cfg.run_tests else "0",
+            "LFS_FORCE_FORMAT": "1" if self.force_format else "0",
         }
         if not self.cfg.prepare_host:
             env["LFS_SKIP_HOST_PREPARE"] = "1"

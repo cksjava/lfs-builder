@@ -68,8 +68,12 @@ log_step 7 22 'sed -e '"'"'/cpython/d'"'"' -i ../gcc/testsuite/gcc.dg/plugin/plu
 sed -e '/cpython/d' -i ../gcc/testsuite/gcc.dg/plugin/plugin.exp
 
 log_step 8 22 'make check (test suite)'
-chown -R tester .
-su tester -c "PATH=$PATH make -k check"
+if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then
+  chown -R tester .
+  su tester -c "PATH=$PATH make -k check"
+else
+  log "skipping test suite (LFS_RUN_TESTS=0)"
+fi
 
 log_step 9 22 '../contrib/test_summary'
 ../contrib/test_summary

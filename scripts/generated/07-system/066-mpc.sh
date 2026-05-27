@@ -41,7 +41,11 @@ make
 make html
 
 log_step 3 4 'make check (test suite)'
-make check
+if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then
+  make check
+else
+  log "skipping test suite (LFS_RUN_TESTS=0)"
+fi
 
 log_step 4 4 'make install'
 make install

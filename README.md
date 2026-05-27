@@ -12,7 +12,7 @@ Unattended build orchestrator for [Linux From Scratch](https://www.linuxfromscra
 - **SBU** calibration from Binutils Pass 1 with per-package ETA and remaining-time estimates
 - Kernel `.config` seeded from the running host, then LFS mandatory options applied
 - **Resume** from last successful step (`--resume`)
-- **Cleanup** mode to unmount `$LFS` and virtual filesystems (`--cleanup`)
+- **Cleanup** mode to unmount `$LFS` and virtual filesystems (`--cleanup` or `--clean`)
 - Re-executes via `sudo` when started as a normal user
 
 ## Requirements
@@ -51,7 +51,7 @@ Full build (host prepare + check run automatically before step 1 on a fresh buil
 ./build_lfs.py
 ```
 
-Use `--skip-host-prepare` if packages are already installed. Resume skips host prep/check.
+Use `--skip-host-prepare` if packages are already installed. Resume skips host prep/check and does not reformat the LFS partition. A fresh build (without `--resume`) always formats the root partition on step 1.
 
 Answer the prompts once. The script elevates to root and runs through all phases until GRUB is installed.
 
@@ -70,7 +70,7 @@ Answer the prompts once. The script elevates to root and runs through all phases
 ### Cleanup mounts
 
 ```bash
-./build_lfs.py --cleanup
+./build_lfs.py --cleanup   # or: ./build_lfs.py --clean
 ```
 
 ## Layout
