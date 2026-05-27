@@ -94,26 +94,28 @@ class LFSOrchestrator:
         rel = entry["script"]
         return self.scripts_dir / rel
 
-    def _stage_script_for_lfs_user(self, script: Path) -> Path:
-        """Copy script under $LFS/sources so user lfs can read and execute it."""
-        stage_dir = Path(self.cfg.sources) / ".lfs-builder-run"
-        stage_dir.mkdir(parents=True, exist_ok=True)
+    def _lfs_stage_dir(self) -> Path:
+        return Path(self.cfg.sources) / ".lfs-builder-run"
+
+    def _stage_script_for_lfs_user(self, script: Path) -> tuple[Path, Path]:
+        """Copy script and lib under $LFS/sources so user lfs can read them."""
+        stage_dir = self._lfs_stage_dir()
+        lib_dir = stage_dir / "lib"
+        lib_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(self.scripts_dir / "lib" / "common.sh", lib_dir / "common.sh")
+
         staged = stage_dir / f"{script.parent.name}-{script.name}"
-        lib = self.scripts_dir / "lib" / "common.sh"
-        text = script.read_text(encoding="utf-8")
-        text = text.replace(
-            'source "$(dirname "$0")/../../lib/common.sh"',
-            f'source "{lib}"',
-        )
-        staged.write_text(text, encoding="utf-8")
+        shutil.copy2(script, staged)
         staged.chmod(0o755)
+        (lib_dir / "common.sh").chmod(0o644)
+
         try:
             pw = pwd.getpwnam(self.cfg.build_user)
-            os.chown(staged, pw.pw_uid, pw.pw_gid)
-            os.chown(stage_dir, pw.pw_uid, pw.pw_gid)
+            for path in (stage_dir, lib_dir, lib_dir / "common.sh", staged):
+                os.chown(path, pw.pw_uid, pw.pw_gid)
         except KeyError:
             pass  # user not created yet
-        return staged
+        return staged, stage_dir
 
     def _run_step(self, index: int, entry: dict) -> None:
         step_id = entry["id"]
@@ -150,11 +152,17 @@ class LFSOrchestrator:
 
         user = entry.get("user")
         if user == "lfs":
-            run_script = self._stage_script_for_lfs_user(script)
+            run_script, builder_scripts = self._stage_script_for_lfs_user(script)
+            lfs_env = {
+                **os.environ,
+                **env,
+                "HOME": f"/home/{self.cfg.build_user}",
+                "LFS_BUILDER_SCRIPTS": str(builder_scripts),
+            }
             rc = drop_to_user(
                 self.cfg.build_user,
                 ["bash", "-e", str(run_script)],
-                env={**os.environ, **env, "HOME": f"/home/{self.cfg.build_user}"},
+                env=lfs_env,
             )
             if rc != 0:
                 raise subprocess.CalledProcessError(rc, step_id)
