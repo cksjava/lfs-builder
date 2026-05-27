@@ -9,6 +9,8 @@ LFS_STEP_ID="05-cross-temp/gcc-pass2"
 log_begin
 trap 'log_fail $?' ERR
 
+require_var LFS
+
 # Package: gcc-pass2
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"

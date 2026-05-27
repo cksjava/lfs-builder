@@ -13,12 +13,12 @@ trap 'log_fail $?' ERR
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
 log "extract source tarball (if needed)"
-TARBALL=$(ls -1 flit-core-3.12.0*.tar.* 2>/dev/null | head -1)
-if [ -n "$TARBALL" ] && [ ! -d "flit-core-3.12.0" ]; then
+TARBALL=$(ls -1 flit_core-3.12.0*.tar.* 2>/dev/null | head -1)
+if [ -n "$TARBALL" ] && [ ! -d "flit_core-3.12.0" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
-cd "flit-core-3.12.0"
+cd "flit_core-3.12.0"
 log "Building in $(pwd)"
 
 require_var LFS

@@ -13,12 +13,12 @@ trap 'log_fail $?' ERR
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
 log "extract source tarball (if needed)"
-TARBALL=$(ls -1 d-bus-1.16.2*.tar.* 2>/dev/null | head -1)
-if [ -n "$TARBALL" ] && [ ! -d "d-bus-1.16.2" ]; then
+TARBALL=$(ls -1 dbus-1.16.2*.tar.* 2>/dev/null | head -1)
+if [ -n "$TARBALL" ] && [ ! -d "dbus-1.16.2" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
-cd "d-bus-1.16.2"
+cd "dbus-1.16.2"
 log "Building in $(pwd)"
 
 require_var LFS

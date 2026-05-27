@@ -9,6 +9,8 @@ LFS_STEP_ID="05-cross-temp/findutils"
 log_begin
 trap 'log_fail $?' ERR
 
+require_var LFS
+
 # Package: findutils
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"

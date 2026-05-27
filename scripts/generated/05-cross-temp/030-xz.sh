@@ -9,6 +9,8 @@ LFS_STEP_ID="05-cross-temp/xz"
 log_begin
 trap 'log_fail $?' ERR
 
+require_var LFS
+
 # Package: xz
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"

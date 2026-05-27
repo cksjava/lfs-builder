@@ -9,6 +9,8 @@ LFS_STEP_ID="05-cross-temp/bash"
 log_begin
 trap 'log_fail $?' ERR
 
+require_var LFS
+
 # Package: bash
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"

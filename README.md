@@ -31,7 +31,9 @@ cd lfs-builder
 ./generate_scripts.py          # Regenerate after book updates
 ```
 
-This writes **139 shell scripts** under `scripts/generated/<phase>/` plus `manifest.json`.
+This writes **142 shell scripts** under `scripts/generated/<phase>/` plus `manifest.json` and `data/package-sources.json` (authoritative tarball → build-directory map from `data/wget-list-systemd`).
+
+Package source directories come from `data/package-sources.json`, not HTML title parsing. Steps with special tarball/directory names (e.g. `linux-headers`, `Python`, `tcl`, `util-linux`) are listed in `PACKAGE_OVERRIDES` inside `lfs_builder/package_sources.py`.
 
 ## Quick start
 

@@ -11,6 +11,7 @@ _ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(_ROOT))
 
 from lfs_builder.script_generator import generate_all
+from lfs_builder.package_sources import write_package_sources_json
 
 
 def main() -> int:
@@ -35,6 +36,8 @@ def main() -> int:
         return 1
 
     out = args.output.resolve()
+    pkg_map_path = write_package_sources_json(book)
+    print(f"Package sources: {pkg_map_path}")
     print(f"Generating scripts from {book}")
     print(f"Output: {out}")
     entries = generate_all(book, out)

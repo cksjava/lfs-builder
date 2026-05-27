@@ -9,6 +9,8 @@ LFS_STEP_ID="05-cross-temp/patch"
 log_begin
 trap 'log_fail $?' ERR
 
+require_var LFS
+
 # Package: patch
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"

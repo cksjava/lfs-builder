@@ -13,12 +13,12 @@ trap 'log_fail $?' ERR
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
 log "extract source tarball (if needed)"
-TARBALL=$(ls -1 python-3.14.3*.tar.* 2>/dev/null | head -1)
-if [ -n "$TARBALL" ] && [ ! -d "python-3.14.3" ]; then
+TARBALL=$(ls -1 Python-3.14.3*.tar.* 2>/dev/null | head -1)
+if [ -n "$TARBALL" ] && [ ! -d "Python-3.14.3" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
-cd "python-3.14.3"
+cd "Python-3.14.3"
 log "Building in $(pwd)"
 
 require_var LFS

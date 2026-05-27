@@ -7,8 +7,9 @@ import re
 import stat
 from pathlib import Path
 
-from .book_parser import extract_commands, package_dir_from_page, parse_sbu
+from .book_parser import extract_commands, parse_sbu
 from .manifest import BuildStep, StepKind, build_manifest
+from .package_sources import PackageSource, load_package_sources, source_for_step
 
 
 def _filter_commands(step: BuildStep, commands: list[str]) -> list[str]:
@@ -175,20 +176,20 @@ def _script_footer() -> list[str]:
     return ["trap - ERR", "log_done", ""]
 
 
-def _package_preamble(tarball: str | None, meta_name: str) -> list[str]:
-    if not tarball:
-        return []
+def _package_preamble(source: PackageSource, meta_name: str) -> list[str]:
+    glob = source.tarball_glob
+    build_dir = source.build_dir
     return [
         f"# Package: {meta_name}",
         'log "enter sources directory"',
         'cd "${LFS_SOURCES:?}"',
         'log "extract source tarball (if needed)"',
-        f'TARBALL=$(ls -1 {tarball}*.tar.* 2>/dev/null | head -1)',
-        f'if [ -n "$TARBALL" ] && [ ! -d "{tarball}" ]; then',
+        f'TARBALL=$(ls -1 {glob}*.tar.* 2>/dev/null | head -1)',
+        f'if [ -n "$TARBALL" ] && [ ! -d "{build_dir}" ]; then',
         '  log "Extracting $TARBALL"',
         '  tar -xf "$TARBALL"',
         "fi",
-        f'cd "{tarball}"',
+        f'cd "{build_dir}"',
         'log "Building in $(pwd)"',
         "",
     ]
@@ -215,6 +216,8 @@ def generate_step_script(
     book_path: Path,
     step: BuildStep,
     out_path: Path,
+    *,
+    package_sources: dict[str, PackageSource | None],
 ) -> dict:
     """Write one step script; return metadata for manifest."""
     meta: dict = {
@@ -247,10 +250,7 @@ def generate_step_script(
 
     lines = _script_header(step, book_meta.name)
 
-    if step.kind == StepKind.PACKAGE:
-        pkg_dir = package_dir_from_page(html_path)
-        lines.extend(_package_preamble(pkg_dir, book_meta.name))
-    elif step.id in ("host-check", "aboutlfs"):
+    if step.id in ("host-check", "aboutlfs"):
         lines.append('require_var LFS')
         lines.append("")
     elif step.id == "filesystem":
@@ -275,6 +275,12 @@ def generate_step_script(
     body = list(commands)
     if step.id in ("filesystem", "mount"):
         body = []
+    if step.kind == StepKind.PACKAGE:
+        pkg_source = source_for_step(step, package_sources)
+        if pkg_source:
+            lines.extend(_package_preamble(pkg_source, book_meta.name))
+        elif not body:
+            body = ['echo "WARNING: no source directory mapped for this package"']
     if not body and step.kind == StepKind.PACKAGE:
         body = ['echo "WARNING: no commands extracted"']
 
@@ -298,8 +304,11 @@ def generate_step_script(
 def generate_all(
     book_path: Path,
     output_dir: Path,
+    *,
+    package_sources: dict[str, PackageSource | None] | None = None,
 ) -> list[dict]:
     """Generate all scripts and manifest.json under output_dir."""
+    sources = package_sources or load_package_sources()
     manifest_steps = build_manifest(book_path)
     entries: list[dict] = []
 
@@ -324,7 +333,7 @@ def generate_all(
 
         script_name = f"{seq:03d}-{step.id}.sh"
         out_path = output_dir / step.phase / script_name
-        meta = generate_step_script(book_path, step, out_path)
+        meta = generate_step_script(book_path, step, out_path, package_sources=sources)
         meta["index"] = index
         meta["seq"] = seq
         entries.append(meta)

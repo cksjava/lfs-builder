@@ -13,12 +13,12 @@ trap 'log_fail $?' ERR
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
 log "extract source tarball (if needed)"
-TARBALL=$(ls -1 xml-parser-2.47*.tar.* 2>/dev/null | head -1)
-if [ -n "$TARBALL" ] && [ ! -d "xml-parser-2.47" ]; then
+TARBALL=$(ls -1 XML-Parser-2.47*.tar.* 2>/dev/null | head -1)
+if [ -n "$TARBALL" ] && [ ! -d "XML-Parser-2.47" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
-cd "xml-parser-2.47"
+cd "XML-Parser-2.47"
 log "Building in $(pwd)"
 
 require_var LFS

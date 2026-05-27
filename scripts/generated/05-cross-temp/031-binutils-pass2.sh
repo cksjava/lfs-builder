@@ -9,6 +9,8 @@ LFS_STEP_ID="05-cross-temp/binutils-pass2"
 log_begin
 trap 'log_fail $?' ERR
 
+require_var LFS
+
 # Package: binutils-pass2
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"

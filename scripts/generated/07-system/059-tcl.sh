@@ -13,12 +13,12 @@ trap 'log_fail $?' ERR
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
 log "extract source tarball (if needed)"
-TARBALL=$(ls -1 tcl-8.6.17*.tar.* 2>/dev/null | head -1)
-if [ -n "$TARBALL" ] && [ ! -d "tcl-8.6.17" ]; then
+TARBALL=$(ls -1 tcl8.6.17-src*.tar.* 2>/dev/null | head -1)
+if [ -n "$TARBALL" ] && [ ! -d "tcl8.6.17" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
-cd "tcl-8.6.17"
+cd "tcl8.6.17"
 log "Building in $(pwd)"
 
 require_var LFS

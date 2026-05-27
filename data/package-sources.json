@@ -1,0 +1,361 @@
+{
+  "book": "/home/chandrakant/code-factory/aryalinux/lfs/13.0",
+  "wget_list": "/home/chandrakant/code-factory/aryalinux/lfs/lfs-builder/data/wget-list-systemd",
+  "no_source": [
+    "ch8-cleanup",
+    "cleanup",
+    "stripping"
+  ],
+  "packages": {
+    "Python": {
+      "tarball_glob": "Python-3.14.3",
+      "build_dir": "Python-3.14.3"
+    },
+    "acl": {
+      "tarball_glob": "acl-2.3.2",
+      "build_dir": "acl-2.3.2"
+    },
+    "attr": {
+      "tarball_glob": "attr-2.5.2",
+      "build_dir": "attr-2.5.2"
+    },
+    "autoconf": {
+      "tarball_glob": "autoconf-2.72",
+      "build_dir": "autoconf-2.72"
+    },
+    "automake": {
+      "tarball_glob": "automake-1.18.1",
+      "build_dir": "automake-1.18.1"
+    },
+    "bash": {
+      "tarball_glob": "bash-5.3",
+      "build_dir": "bash-5.3"
+    },
+    "bc": {
+      "tarball_glob": "bc-7.0.3",
+      "build_dir": "bc-7.0.3"
+    },
+    "binutils": {
+      "tarball_glob": "binutils-2.46.0",
+      "build_dir": "binutils-2.46.0"
+    },
+    "binutils-pass1": {
+      "tarball_glob": "binutils-2.46.0",
+      "build_dir": "binutils-2.46.0"
+    },
+    "binutils-pass2": {
+      "tarball_glob": "binutils-2.46.0",
+      "build_dir": "binutils-2.46.0"
+    },
+    "bison": {
+      "tarball_glob": "bison-3.8.2",
+      "build_dir": "bison-3.8.2"
+    },
+    "bzip2": {
+      "tarball_glob": "bzip2-1.0.8",
+      "build_dir": "bzip2-1.0.8"
+    },
+    "cleanup": null,
+    "coreutils": {
+      "tarball_glob": "coreutils-9.10",
+      "build_dir": "coreutils-9.10"
+    },
+    "dbus": {
+      "tarball_glob": "dbus-1.16.2",
+      "build_dir": "dbus-1.16.2"
+    },
+    "dejagnu": {
+      "tarball_glob": "dejagnu-1.6.3",
+      "build_dir": "dejagnu-1.6.3"
+    },
+    "diffutils": {
+      "tarball_glob": "diffutils-3.12",
+      "build_dir": "diffutils-3.12"
+    },
+    "e2fsprogs": {
+      "tarball_glob": "e2fsprogs-1.47.3",
+      "build_dir": "e2fsprogs-1.47.3"
+    },
+    "expat": {
+      "tarball_glob": "expat-2.7.4",
+      "build_dir": "expat-2.7.4"
+    },
+    "expect": {
+      "tarball_glob": "expect5.45.4",
+      "build_dir": "expect5.45.4"
+    },
+    "file": {
+      "tarball_glob": "file-5.46",
+      "build_dir": "file-5.46"
+    },
+    "findutils": {
+      "tarball_glob": "findutils-4.10.0",
+      "build_dir": "findutils-4.10.0"
+    },
+    "flex": {
+      "tarball_glob": "flex-2.6.4",
+      "build_dir": "flex-2.6.4"
+    },
+    "flit-core": {
+      "tarball_glob": "flit_core-3.12.0",
+      "build_dir": "flit_core-3.12.0"
+    },
+    "gawk": {
+      "tarball_glob": "gawk-5.3.2",
+      "build_dir": "gawk-5.3.2"
+    },
+    "gcc": {
+      "tarball_glob": "gcc-15.2.0",
+      "build_dir": "gcc-15.2.0"
+    },
+    "gcc-libstdc++": {
+      "tarball_glob": "gcc-15.2.0",
+      "build_dir": "gcc-15.2.0"
+    },
+    "gcc-pass1": {
+      "tarball_glob": "gcc-15.2.0",
+      "build_dir": "gcc-15.2.0"
+    },
+    "gcc-pass2": {
+      "tarball_glob": "gcc-15.2.0",
+      "build_dir": "gcc-15.2.0"
+    },
+    "gdbm": {
+      "tarball_glob": "gdbm-1.26",
+      "build_dir": "gdbm-1.26"
+    },
+    "gettext": {
+      "tarball_glob": "gettext-1.0",
+      "build_dir": "gettext-1.0"
+    },
+    "glibc": {
+      "tarball_glob": "glibc-2.43",
+      "build_dir": "glibc-2.43"
+    },
+    "gmp": {
+      "tarball_glob": "gmp-6.3.0",
+      "build_dir": "gmp-6.3.0"
+    },
+    "gperf": {
+      "tarball_glob": "gperf-3.3",
+      "build_dir": "gperf-3.3"
+    },
+    "grep": {
+      "tarball_glob": "grep-3.12",
+      "build_dir": "grep-3.12"
+    },
+    "groff": {
+      "tarball_glob": "groff-1.23.0",
+      "build_dir": "groff-1.23.0"
+    },
+    "grub": {
+      "tarball_glob": "grub-2.14",
+      "build_dir": "grub-2.14"
+    },
+    "gzip": {
+      "tarball_glob": "gzip-1.14",
+      "build_dir": "gzip-1.14"
+    },
+    "iana-etc": {
+      "tarball_glob": "iana-etc-20260202",
+      "build_dir": "iana-etc-20260202"
+    },
+    "inetutils": {
+      "tarball_glob": "inetutils-2.7",
+      "build_dir": "inetutils-2.7"
+    },
+    "intltool": {
+      "tarball_glob": "intltool-0.51.0",
+      "build_dir": "intltool-0.51.0"
+    },
+    "iproute2": {
+      "tarball_glob": "iproute2-6.18.0",
+      "build_dir": "iproute2-6.18.0"
+    },
+    "jinja2": {
+      "tarball_glob": "jinja2-3.1.6",
+      "build_dir": "jinja2-3.1.6"
+    },
+    "kbd": {
+      "tarball_glob": "kbd-2.9.0",
+      "build_dir": "kbd-2.9.0"
+    },
+    "kmod": {
+      "tarball_glob": "kmod-34.2",
+      "build_dir": "kmod-34.2"
+    },
+    "less": {
+      "tarball_glob": "less-692",
+      "build_dir": "less-692"
+    },
+    "libcap": {
+      "tarball_glob": "libcap-2.77",
+      "build_dir": "libcap-2.77"
+    },
+    "libelf": {
+      "tarball_glob": "elfutils-0.194",
+      "build_dir": "elfutils-0.194"
+    },
+    "libffi": {
+      "tarball_glob": "libffi-3.5.2",
+      "build_dir": "libffi-3.5.2"
+    },
+    "libpipeline": {
+      "tarball_glob": "libpipeline-1.5.8",
+      "build_dir": "libpipeline-1.5.8"
+    },
+    "libtool": {
+      "tarball_glob": "libtool-2.5.4",
+      "build_dir": "libtool-2.5.4"
+    },
+    "libxcrypt": {
+      "tarball_glob": "libxcrypt-4.5.2",
+      "build_dir": "libxcrypt-4.5.2"
+    },
+    "linux-headers": {
+      "tarball_glob": "linux-6.18.10",
+      "build_dir": "linux-6.18.10"
+    },
+    "lz4": {
+      "tarball_glob": "lz4-1.10.0",
+      "build_dir": "lz4-1.10.0"
+    },
+    "m4": {
+      "tarball_glob": "m4-1.4.21",
+      "build_dir": "m4-1.4.21"
+    },
+    "make": {
+      "tarball_glob": "make-4.4.1",
+      "build_dir": "make-4.4.1"
+    },
+    "man-db": {
+      "tarball_glob": "man-db-2.13.1",
+      "build_dir": "man-db-2.13.1"
+    },
+    "man-pages": {
+      "tarball_glob": "man-pages-6.17",
+      "build_dir": "man-pages-6.17"
+    },
+    "markupsafe": {
+      "tarball_glob": "markupsafe-3.0.3",
+      "build_dir": "markupsafe-3.0.3"
+    },
+    "meson": {
+      "tarball_glob": "meson-1.10.1",
+      "build_dir": "meson-1.10.1"
+    },
+    "mpc": {
+      "tarball_glob": "mpc-1.3.1",
+      "build_dir": "mpc-1.3.1"
+    },
+    "mpfr": {
+      "tarball_glob": "mpfr-4.2.2",
+      "build_dir": "mpfr-4.2.2"
+    },
+    "ncurses": {
+      "tarball_glob": "ncurses-6.6",
+      "build_dir": "ncurses-6.6"
+    },
+    "ninja": {
+      "tarball_glob": "ninja-1.13.2",
+      "build_dir": "ninja-1.13.2"
+    },
+    "openssl": {
+      "tarball_glob": "openssl-3.6.1",
+      "build_dir": "openssl-3.6.1"
+    },
+    "packaging": {
+      "tarball_glob": "packaging-26.0",
+      "build_dir": "packaging-26.0"
+    },
+    "patch": {
+      "tarball_glob": "patch-2.8",
+      "build_dir": "patch-2.8"
+    },
+    "pcre2": {
+      "tarball_glob": "pcre2-10.47",
+      "build_dir": "pcre2-10.47"
+    },
+    "perl": {
+      "tarball_glob": "perl-5.42.0",
+      "build_dir": "perl-5.42.0"
+    },
+    "pkgconf": {
+      "tarball_glob": "pkgconf-2.5.1",
+      "build_dir": "pkgconf-2.5.1"
+    },
+    "procps-ng": {
+      "tarball_glob": "procps-ng-4.0.6",
+      "build_dir": "procps-ng-4.0.6"
+    },
+    "psmisc": {
+      "tarball_glob": "psmisc-23.7",
+      "build_dir": "psmisc-23.7"
+    },
+    "readline": {
+      "tarball_glob": "readline-8.3",
+      "build_dir": "readline-8.3"
+    },
+    "sed": {
+      "tarball_glob": "sed-4.9",
+      "build_dir": "sed-4.9"
+    },
+    "setuptools": {
+      "tarball_glob": "setuptools-82.0.0",
+      "build_dir": "setuptools-82.0.0"
+    },
+    "shadow": {
+      "tarball_glob": "shadow-4.19.3",
+      "build_dir": "shadow-4.19.3"
+    },
+    "sqlite": {
+      "tarball_glob": "sqlite-autoconf-3510200",
+      "build_dir": "sqlite-autoconf-3510200"
+    },
+    "stripping": null,
+    "systemd": {
+      "tarball_glob": "systemd-259.1",
+      "build_dir": "systemd-259.1"
+    },
+    "tar": {
+      "tarball_glob": "tar-1.35",
+      "build_dir": "tar-1.35"
+    },
+    "tcl": {
+      "tarball_glob": "tcl8.6.17-src",
+      "build_dir": "tcl8.6.17"
+    },
+    "texinfo": {
+      "tarball_glob": "texinfo-7.2",
+      "build_dir": "texinfo-7.2"
+    },
+    "util-linux": {
+      "tarball_glob": "util-linux-2.41.3",
+      "build_dir": "util-linux-2.41.3"
+    },
+    "vim": {
+      "tarball_glob": "vim-9.2.0078",
+      "build_dir": "vim-9.2.0078"
+    },
+    "wheel": {
+      "tarball_glob": "wheel-0.46.3",
+      "build_dir": "wheel-0.46.3"
+    },
+    "xml-parser": {
+      "tarball_glob": "XML-Parser-2.47",
+      "build_dir": "XML-Parser-2.47"
+    },
+    "xz": {
+      "tarball_glob": "xz-5.8.2",
+      "build_dir": "xz-5.8.2"
+    },
+    "zlib": {
+      "tarball_glob": "zlib-1.3.2",
+      "build_dir": "zlib-1.3.2"
+    },
+    "zstd": {
+      "tarball_glob": "zstd-1.5.7",
+      "build_dir": "zstd-1.5.7"
+    }
+  }
+}

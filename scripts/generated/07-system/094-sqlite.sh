@@ -13,12 +13,12 @@ trap 'log_fail $?' ERR
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
 log "extract source tarball (if needed)"
-TARBALL=$(ls -1 sqlite-3510200*.tar.* 2>/dev/null | head -1)
-if [ -n "$TARBALL" ] && [ ! -d "sqlite-3510200" ]; then
+TARBALL=$(ls -1 sqlite-autoconf-3510200*.tar.* 2>/dev/null | head -1)
+if [ -n "$TARBALL" ] && [ ! -d "sqlite-autoconf-3510200" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
-cd "sqlite-3510200"
+cd "sqlite-autoconf-3510200"
 log "Building in $(pwd)"
 
 require_var LFS
