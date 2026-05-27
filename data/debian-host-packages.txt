@@ -1,21 +1,38 @@
-# Debian/Ubuntu packages covering LFS 13.0-systemd chapter 2.2 host requirements.
+# Debian/Ubuntu packages for LFS 13.0-systemd chapter 2.2 (hostreqs.html).
+# Used by prep.sh and the build orchestrator host-prepare step.
+
+# Toolchain and build tools from the book software list
 build-essential
+binutils
 bison
 flex
 gawk
 gettext
 texinfo
-wget
-xz-utils
-patch
-perl
-python3
 m4
+make
+patch
 gcc
 g++
 libc6-dev
-file
+
+# Utilities (often preinstalled; listed explicitly for minimal images)
+coreutils
+diffutils
+findutils
+grep
+gzip
+sed
+tar
+xz-utils
+wget
+perl
+python3
 gperf
 bc
+file
+
+# Orchestrator and downloads
+sudo
 rsync
 ca-certificates

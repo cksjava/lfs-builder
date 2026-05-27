@@ -20,7 +20,7 @@ if [ "$mem_gb" -lt 8 ]; then
 fi
 
 log_step 2 3 "run LFS version-check.sh"
-vc="${LFS_BUILDER_SCRIPTS:?}/../data/version-check.sh"
+vc="$(cd "${LFS_BUILDER_SCRIPTS:?}/.." && pwd)/version-check.sh"
 if [ ! -x "$vc" ]; then
   chmod +x "$vc" 2>/dev/null || true
 fi

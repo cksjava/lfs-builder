@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def version_check_script(scripts_dir: Path) -> Path:
-    return scripts_dir.parent / "data" / "version-check.sh"
+    return scripts_dir.parent / "version-check.sh"
 
 
 def run_version_check(scripts_dir: Path, *, verbose: bool = True) -> int:

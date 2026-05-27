@@ -17,8 +17,8 @@ Unattended build orchestrator for [Linux From Scratch](https://www.linuxfromscra
 
 ## Requirements
 
-- Host meets LFS 13.0 [host requirements](https://www.linuxfromscratch.org/lfs/view/stable/chapter02/hostreqs.html) — verified automatically before partitioning
-- `python3`, `bash`, `wget`, `sudo`, root access
+- Host meets LFS 13.0 [host requirements](https://www.linuxfromscratch.org/lfs/view/stable/chapter02/hostreqs.html)
+- `python3`, `bash`, `wget`, `sudo`, root access (installed by `prep.sh` on Debian/Ubuntu)
 - Extracted book: `../13.0/` (from `LFS-BOOK-13.0.tar.xz`) — used for build instructions only; sources come from `data/`
 - Empty partition(s) for LFS (and optional `/boot`, swap)
 
@@ -37,11 +37,18 @@ Package source directories come from `data/package-sources.json`, not HTML title
 
 ## Quick start
 
-Prepare and verify the host (chapter 2.2) before the full build:
+After cloning, prepare a vanilla Debian/Ubuntu host (chapter 2.2 packages + symlinks + version check):
 
 ```bash
 cd lfs-builder
-./build_lfs.py --prepare-host    # apt install build deps on Debian/Ubuntu
+sudo ./prep.sh                   # apt install; runs ./version-check.sh at the end
+./version-check.sh               # optional: run again as a normal user
+```
+
+Equivalent via the orchestrator:
+
+```bash
+./build_lfs.py --prepare-host    # runs prep.sh as root
 ./build_lfs.py --check-host      # version-check only
 ```
 
@@ -51,7 +58,7 @@ Full build (host prepare + check run automatically before step 1 on a fresh buil
 ./build_lfs.py
 ```
 
-Use `--skip-host-prepare` if packages are already installed. Resume skips host prep/check and does not reformat the LFS partition. A fresh build (without `--resume`) always formats the root partition on step 1.
+Use `--skip-host-prepare` if you already ran `prep.sh`. Resume re-runs the host check (and installs missing packages if needed) but does not reformat the LFS partition. A fresh build (without `--resume`) always formats the root partition on step 1.
 
 Answer the prompts once. The script elevates to root and runs through all phases until GRUB is installed.
 
@@ -77,6 +84,8 @@ Answer the prompts once. The script elevates to root and runs through all phases
 
 ```
 lfs-builder/
+  prep.sh                # Standalone Debian/Ubuntu host prep (chapter 2.2)
+  version-check.sh       # Book version-check script (+ makeinfo/msgfmt for Glibc)
   build_lfs.py           # Main entry point
   generate_scripts.py    # Generate scripts from book (run once)
   lfs_builder/           # Python package

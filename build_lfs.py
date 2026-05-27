@@ -38,9 +38,9 @@ def _make_scripts_executable() -> None:
     for sh in (_ROOT / "scripts").rglob("*.sh"):
         mode = sh.stat().st_mode
         sh.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-    vc = _ROOT / "data" / "version-check.sh"
-    if vc.is_file():
-        vc.chmod(vc.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    for vc in (_ROOT / "version-check.sh", _ROOT / "prep.sh", _ROOT / "data" / "version-check.sh"):
+        if vc.is_file():
+            vc.chmod(vc.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 
 def main() -> int:
