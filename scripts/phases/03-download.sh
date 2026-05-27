@@ -8,11 +8,11 @@ trap 'log_fail $?' ERR
 
 require_root
 require_var LFS_MOUNT
-require_var LFS_BOOK
 
 export LFS="${LFS_MOUNT}"
-LIST="${LFS_BOOK}/wget-list-systemd"
-MD5="${LFS_BOOK}/md5sums"
+DATA_DIR="$(cd "$(dirname "$0")/../data" && pwd)"
+LIST="${LFS_WGET_LIST:-${DATA_DIR}/wget-list-systemd}"
+MD5="${LFS_MD5SUMS:-${DATA_DIR}/md5sums}"
 DEST="${LFS}/sources"
 
 [[ -f "${LIST}" ]] || die "wget list not found: ${LIST}"

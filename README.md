@@ -5,7 +5,7 @@ Unattended build orchestrator for [Linux From Scratch](https://www.linuxfromscra
 ## Features
 
 - Interactive wizard for partition, mount point, timezone, keymap, locale, hostname, GRUB disk, and parallel jobs
-- Downloads all sources and patches from `wget-list-systemd` with MD5 verification
+- Downloads all sources and patches from bundled `data/wget-list-systemd` with MD5 verification (mirrors fixed when book URLs fail)
 - Executes book installation commands in chapter order (cross toolchain → temp tools → chroot → system → config → kernel/GRUB)
 - Handles chroot enter/exit, virtual kernel filesystem mounts, and `lfs` user builds
 - **Quiet** (default) or **verbose** (`-v`) logging
@@ -19,7 +19,7 @@ Unattended build orchestrator for [Linux From Scratch](https://www.linuxfromscra
 
 - Host meets LFS 13.0 [host requirements](https://www.linuxfromscratch.org/lfs/view/stable/chapter02/hostreqs.html)
 - `python3`, `bash`, `wget`, `sudo`, root access
-- Extracted book: `../13.0/` (from `LFS-BOOK-13.0.tar.xz`)
+- Extracted book: `../13.0/` (from `LFS-BOOK-13.0.tar.xz`) — used for build instructions only; sources come from `data/`
 - Empty partition(s) for LFS (and optional `/boot`, swap)
 
 ## Generate build scripts (once per book version)
@@ -74,6 +74,7 @@ lfs-builder/
     orchestrator.py      # Runs pre-generated scripts
     runner.py            # Quiet/verbose execution
     sbu.py               # SBU timing
+  data/                  # wget-list-systemd, wget-list, md5sums (fixed mirrors)
   scripts/
     lib/common.sh
     phases/              # Partition, download, cleanup, finish (hand-written)

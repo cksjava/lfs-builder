@@ -16,7 +16,7 @@ from typing import Any
 class LFSConfig:
     """User-provided build configuration."""
 
-    lfs_device: str = ""
+    lfs_device: str = "/dev/sda1"
     lfs_mount: str = "/mnt/lfs"
     boot_device: str = ""
     boot_mount: str = "/boot"
@@ -30,13 +30,13 @@ class LFSConfig:
     lang: str = "en_US.UTF-8"
     hwclock_utc: bool = True
     root_password: str = ""
-    grub_device: str = ""
+    grub_device: str = "/dev/sda"
     build_user: str = "lfs"
     jobs: int = 0
     run_tests: bool = True
     book_path: str = ""
     work_dir: str = ""
-    verbose: bool = False
+    verbose: bool = True
     kernel_use_host_config: bool = True
     extra: dict[str, Any] = field(default_factory=dict)
 
@@ -145,7 +145,7 @@ def run_wizard(
     cfg.hostname = _prompt("Target hostname", "lfs")
 
     print("\n--- Storage ---")
-    cfg.lfs_device = _prompt("LFS root partition (e.g. /dev/sdb3)")
+    cfg.lfs_device = _prompt("LFS root partition (e.g. /dev/sda1)", cfg.lfs_device)
     cfg.lfs_mount = _prompt("LFS mount point", "/mnt/lfs")
     cfg.filesystem = _prompt("Root filesystem type", "ext4")
     cfg.separate_boot = _prompt_bool("Separate /boot partition?", False)
@@ -153,7 +153,7 @@ def run_wizard(
         cfg.boot_device = _prompt("Boot partition device")
         cfg.boot_mount = _prompt("Boot mount inside LFS", "/boot")
     cfg.swap_device = _prompt("Swap partition (empty to skip)", "")
-    cfg.grub_device = _prompt("Disk for GRUB install (e.g. /dev/sdb)", "")
+    cfg.grub_device = _prompt("Disk for GRUB install (e.g. /dev/sda)", cfg.grub_device)
 
     print("\n--- Build options ---")
     cfg.build_user = _prompt("Unprivileged build user", "lfs")
@@ -162,7 +162,7 @@ def run_wizard(
     cfg.kernel_use_host_config = _prompt_bool(
         "Seed kernel .config from running host?", True
     )
-    cfg.verbose = _prompt_bool("Verbose mode (show all compiler output)?", False)
+    cfg.verbose = _prompt_bool("Verbose mode (show all compiler output)?", cfg.verbose)
 
     pw1 = getpass.getpass("Root password for finished system (empty=skip): ")
     if pw1:
