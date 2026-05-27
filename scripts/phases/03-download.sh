@@ -22,7 +22,39 @@ mkdir -pv "${DEST}"
 cd "${DEST}"
 
 if command -v wget &>/dev/null; then
-  wget --input-file="${LIST}" --continue --directory-prefix="${DEST}"
+  set +e
+  wget \
+    --input-file="${LIST}" \
+    --continue \
+    --directory-prefix="${DEST}" \
+    --tries=5 \
+    --timeout=30 \
+    --waitretry=5 \
+    --retry-connrefused
+  rc=$?
+  set -e
+
+  if [[ "$rc" -ne 0 ]]; then
+    log "wget returned non-zero exit ($rc). Checking for missing files..."
+    missing=()
+    while IFS= read -r url; do
+      [[ -z "$url" ]] && continue
+      file="${url##*/}"
+      if [[ ! -f "${DEST}/${file}" ]]; then
+        missing+=("$file")
+      fi
+    done < "${LIST}"
+
+    if [[ "${#missing[@]}" -gt 0 ]]; then
+      log "Missing ${#missing[@]} files after wget:"
+      for f in "${missing[@]}"; do
+        echo "  - $f"
+      done
+      die "Download incomplete (wget exit ${rc}). Re-run this step to resume."
+    fi
+
+    log "All files present despite wget exit ${rc}; continuing."
+  fi
 else
   die "wget is required for downloads"
 fi
