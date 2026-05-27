@@ -19,7 +19,7 @@ Unattended build orchestrator for [Linux From Scratch](https://www.linuxfromscra
 
 - Host meets LFS 13.0 [host requirements](https://www.linuxfromscratch.org/lfs/view/stable/chapter02/hostreqs.html)
 - `python3`, `bash`, `wget`, `sudo`, root access (installed by `prep.sh` on Debian/Ubuntu)
-- Extracted book: `../13.0/` (from `LFS-BOOK-13.0.tar.xz`) — used for build instructions only; sources come from `data/`
+- Extracted book: `../13.0/` — run `./download-book.sh` after clone (sources come from bundled `data/`, not the book tree)
 - Empty partition(s) for LFS (and optional `/boot`, swap)
 
 ## Generate build scripts (once per book version)
@@ -37,10 +37,11 @@ Package source directories come from `data/package-sources.json`, not HTML title
 
 ## Quick start
 
-After cloning, prepare a vanilla Debian/Ubuntu host (chapter 2.2 packages + symlinks + version check):
+After cloning:
 
 ```bash
 cd lfs-builder
+./download-book.sh               # fetch LFS-BOOK-13.0.tar.xz → ../13.0/
 sudo ./prep.sh                   # apt install; runs ./version-check.sh at the end
 ./version-check.sh               # optional: run again as a normal user
 ```
@@ -84,6 +85,7 @@ Answer the prompts once. The script elevates to root and runs through all phases
 
 ```
 lfs-builder/
+  download-book.sh       # Download and extract LFS-BOOK-13.0.tar.xz → ../13.0/
   prep.sh                # Standalone Debian/Ubuntu host prep (chapter 2.2)
   version-check.sh       # Book version-check script (+ makeinfo/msgfmt for Glibc)
   build_lfs.py           # Main entry point

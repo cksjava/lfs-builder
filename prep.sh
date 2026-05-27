@@ -5,6 +5,7 @@
 # symlinks per the book, then runs ./version-check.sh.
 #
 # Usage (after clone):
+#   ./download-book.sh
 #   sudo ./prep.sh
 #   ./version-check.sh          # optional repeat as normal user
 #   ./build_lfs.py

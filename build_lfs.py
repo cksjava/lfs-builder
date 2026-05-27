@@ -38,7 +38,12 @@ def _make_scripts_executable() -> None:
     for sh in (_ROOT / "scripts").rglob("*.sh"):
         mode = sh.stat().st_mode
         sh.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-    for vc in (_ROOT / "version-check.sh", _ROOT / "prep.sh", _ROOT / "data" / "version-check.sh"):
+    for vc in (
+        _ROOT / "version-check.sh",
+        _ROOT / "prep.sh",
+        _ROOT / "download-book.sh",
+        _ROOT / "data" / "version-check.sh",
+    ):
         if vc.is_file():
             vc.chmod(vc.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
@@ -133,7 +138,7 @@ Examples:
     book = (args.book or _default_book()).resolve()
     if not book.is_dir():
         print(f"Error: LFS book not found at {book}", file=sys.stderr)
-        print("Extract LFS-BOOK-13.0.tar.xz or pass --book PATH", file=sys.stderr)
+        print("Run ./download-book.sh or pass --book PATH", file=sys.stderr)
         return 1
 
     generated_manifest = _ROOT / "scripts" / "generated" / "manifest.json"
