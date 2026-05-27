@@ -10,7 +10,8 @@ require_root
 require_var LFS_MOUNT
 
 export LFS="${LFS_MOUNT}"
-DATA_DIR="$(cd "$(dirname "$0")/../data" && pwd)"
+# Repo root data/ (scripts/phases -> scripts -> lfs-builder)
+DATA_DIR="$(cd "$(dirname "$0")/../../data" && pwd)"
 LIST="${LFS_WGET_LIST:-${DATA_DIR}/wget-list-systemd}"
 MD5="${LFS_MD5SUMS:-${DATA_DIR}/md5sums}"
 DEST="${LFS}/sources"
