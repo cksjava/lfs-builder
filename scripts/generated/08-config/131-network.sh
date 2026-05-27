@@ -22,8 +22,8 @@ log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
 log_step 1 17 'systemctl disable systemd-networkd-wait-online'
 systemctl disable systemd-networkd-wait-online
 
-log_step 2 17 'ln -s /dev/null /etc/systemd/network/99-default.link'
-ln -s /dev/null /etc/systemd/network/99-default.link
+log_step 2 17 'ln -sf /dev/null /etc/systemd/network/99-default.link'
+ln -sf /dev/null /etc/systemd/network/99-default.link
 
 log_step 3 17 'write configuration file'
 cat > /etc/systemd/network/10-ether0.link << "EOF"

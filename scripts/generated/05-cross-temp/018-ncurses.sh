@@ -49,7 +49,7 @@ make
 
 log_step 4 4 'make'
 make DESTDIR=$LFS install
-ln -sv libncursesw.so $LFS/usr/lib/libncurses.so
+ln -svf libncursesw.so $LFS/usr/lib/libncurses.so
 sed -e 's/^#if.*XOPEN.*$/#if 1/' \
     -i $LFS/usr/include/curses.h
 

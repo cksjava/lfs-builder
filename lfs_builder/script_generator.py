@@ -88,6 +88,43 @@ def _command_label(cmd: str) -> str:
     return first or "run command"
 
 
+def _idempotentize_line(line: str) -> str:
+    """Wrap commands that fail when re-run (resume after partial build)."""
+    s = line.strip()
+    if not s or s.startswith("#"):
+        return line
+
+    m = re.match(r"^groupadd\s+(.+)$", s)
+    if m:
+        args = m.group(1).strip()
+        name = args.split()[-1]
+        if not name.startswith("-"):
+            return f"getent group {name} &>/dev/null || groupadd {args}"
+
+    m = re.match(r"^useradd\s+(.+)$", s)
+    if m and not s.startswith("useradd -D"):
+        args = m.group(1).strip()
+        name = args.split()[-1]
+        if not name.startswith("-"):
+            return f"getent passwd {name} &>/dev/null || useradd {args}"
+
+    if s.startswith("mount ") and "mountpoint" not in s:
+        parts = s.split()
+        target = parts[-1]
+        return f"mountpoint -q {target} 2>/dev/null || {s}"
+
+    if s.startswith("ln -sv ") and not s.startswith("ln -svf"):
+        return s.replace("ln -sv ", "ln -svf ", 1)
+    if re.match(r"^ln\s+-s[^f]", s) and s.startswith("ln -s") and not s.startswith("ln -sf"):
+        return re.sub(r"^ln\s+-s", "ln -sf", s, count=1)
+
+    return line
+
+
+def _idempotentize_command_block(cmd: str) -> str:
+    return "\n".join(_idempotentize_line(ln) for ln in cmd.split("\n"))
+
+
 def _emit_logged_commands(commands: list[str], *, chroot: bool = False) -> list[str]:
     """Prefix each command block with log_step."""
     lines: list[str] = []
@@ -96,6 +133,7 @@ def _emit_logged_commands(commands: list[str], *, chroot: bool = False) -> list[
         lines.append('log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }')
         lines.append("")
     for i, cmd in enumerate(commands, 1):
+        cmd = _idempotentize_command_block(cmd)
         label = _command_label(cmd)
         lines.append(f"log_step {i} {total} {_shell_quote(label)}")
         lines.extend(cmd.split("\n"))

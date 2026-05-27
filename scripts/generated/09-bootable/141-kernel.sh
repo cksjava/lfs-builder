@@ -28,8 +28,8 @@ make
 log_step 3 11 'make'
 make modules_install
 
-log_step 4 11 'mount /boot'
-mount /boot
+log_step 4 11 'mountpoint -q /boot 2>/dev/null || mount /boot'
+mountpoint -q /boot 2>/dev/null || mount /boot
 
 log_step 5 11 'cp -iv arch/x86/boot/bzImage /boot/vmlinuz-6.18.10-lfs-13.0-systemd'
 cp -iv arch/x86/boot/bzImage /boot/vmlinuz-6.18.10-lfs-13.0-systemd

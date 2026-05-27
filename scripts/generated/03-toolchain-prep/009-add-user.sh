@@ -10,9 +10,9 @@ trap 'log_fail $?' ERR
 
 require_var LFS
 
-log_step 1 2 'groupadd lfs'
-groupadd lfs
-useradd -s /bin/bash -g lfs -m -k /dev/null lfs
+log_step 1 2 'getent group lfs &>/dev/null || groupadd lfs'
+getent group lfs &>/dev/null || groupadd lfs
+getent passwd lfs &>/dev/null || useradd -s /bin/bash -g lfs -m -k /dev/null lfs
 
 log_step 2 2 'chown -v lfs $LFS/{usr{,/*},var,etc,tools}'
 chown -v lfs $LFS/{usr{,/*},var,etc,tools}

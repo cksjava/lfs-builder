@@ -53,7 +53,7 @@ make test
 
 log_step 6 6 'make install'
 make install
-ln -svf expect5.45.4/libexpect5.45.4.so /usr/lib
+ln -sfvf expect5.45.4/libexpect5.45.4.so /usr/lib
 
 CHROOT_EOF
 log "left chroot"

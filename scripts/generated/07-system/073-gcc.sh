@@ -81,11 +81,11 @@ log_step 11 22 'chown -v -R root:root \'
 chown -v -R root:root \
     /usr/lib/gcc/$(gcc -dumpmachine)/15.2.0/include{,-fixed}
 
-log_step 12 22 'ln -svr /usr/bin/cpp /usr/lib'
-ln -svr /usr/bin/cpp /usr/lib
+log_step 12 22 'ln -sfvr /usr/bin/cpp /usr/lib'
+ln -sfvr /usr/bin/cpp /usr/lib
 
-log_step 13 22 'ln -sv gcc.1 /usr/share/man/man1/cc.1'
-ln -sv gcc.1 /usr/share/man/man1/cc.1
+log_step 13 22 'ln -svf gcc.1 /usr/share/man/man1/cc.1'
+ln -svf gcc.1 /usr/share/man/man1/cc.1
 
 log_step 14 22 'ln -sfv ../../libexec/gcc/$(gcc -dumpmachine)/15.2.0/liblto_plugin.so \'
 ln -sfv ../../libexec/gcc/$(gcc -dumpmachine)/15.2.0/liblto_plugin.so \

@@ -48,8 +48,8 @@ log_step 5 7 'make install'
 rm -f /usr/bin/gawk-5.3.2
 make install
 
-log_step 6 7 'ln -sv gawk.1 /usr/share/man/man1/awk.1'
-ln -sv gawk.1 /usr/share/man/man1/awk.1
+log_step 6 7 'ln -svf gawk.1 /usr/share/man/man1/awk.1'
+ln -svf gawk.1 /usr/share/man/man1/awk.1
 
 log_step 7 7 'install -vDm644 doc/{awkforai.txt,*.{eps,pdf,jpg}} -t /usr/share/doc/...'
 install -vDm644 doc/{awkforai.txt,*.{eps,pdf,jpg}} -t /usr/share/doc/gawk-5.3.2

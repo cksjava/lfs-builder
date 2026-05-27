@@ -15,7 +15,7 @@ mkdir -pv $LFS/{etc,var} $LFS/usr/{bin,lib,sbin}
 
 log_step 2 4 'for i in bin lib sbin; do'
 for i in bin lib sbin; do
-  ln -sv usr/$i $LFS/$i
+ln -svf usr/$i $LFS/$i
 done
 
 log_step 3 4 'case $(uname -m) in'

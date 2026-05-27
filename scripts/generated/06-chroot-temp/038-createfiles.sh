@@ -19,8 +19,8 @@ chroot "${LFS}" /usr/bin/env -i \
     /bin/bash -euo pipefail <<'CHROOT_EOF'
 log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
 
-log_step 1 7 'ln -sv /proc/self/mounts /etc/mtab'
-ln -sv /proc/self/mounts /etc/mtab
+log_step 1 7 'ln -svf /proc/self/mounts /etc/mtab'
+ln -svf /proc/self/mounts /etc/mtab
 
 log_step 2 7 'write configuration file'
 cat > /etc/hosts << EOF

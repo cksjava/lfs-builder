@@ -33,8 +33,8 @@ make
 log_step 3 4 'make'
 make DESTDIR=$LFS install
 
-log_step 4 4 'ln -sv bash $LFS/bin/sh'
-ln -sv bash $LFS/bin/sh
+log_step 4 4 'ln -svf bash $LFS/bin/sh'
+ln -svf bash $LFS/bin/sh
 
 trap - ERR
 log_done

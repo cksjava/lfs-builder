@@ -71,8 +71,8 @@ make
 log_step 7 8 'make'
 make DESTDIR=$LFS install
 
-log_step 8 8 'ln -sv gcc $LFS/usr/bin/cc'
-ln -sv gcc $LFS/usr/bin/cc
+log_step 8 8 'ln -svf gcc $LFS/usr/bin/cc'
+ln -svf gcc $LFS/usr/bin/cc
 
 trap - ERR
 log_done

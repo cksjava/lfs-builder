@@ -45,9 +45,9 @@ make check
 log_step 4 5 'make install'
 make install
 
-log_step 5 5 'ln -sv flex   /usr/bin/lex'
-ln -sv flex   /usr/bin/lex
-ln -sv flex.1 /usr/share/man/man1/lex.1
+log_step 5 5 'ln -svf flex   /usr/bin/lex'
+ln -svf flex   /usr/bin/lex
+ln -svf flex.1 /usr/share/man/man1/lex.1
 
 CHROOT_EOF
 log "left chroot"

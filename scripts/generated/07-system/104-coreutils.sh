@@ -46,8 +46,8 @@ make
 log_step 4 10 'make'
 make NON_ROOT_USERNAME=tester check-root
 
-log_step 5 10 'groupadd -g 102 dummy -U tester'
-groupadd -g 102 dummy -U tester
+log_step 5 10 'getent group tester &>/dev/null || groupadd -g 102 dummy -U tester'
+getent group tester &>/dev/null || groupadd -g 102 dummy -U tester
 
 log_step 6 10 'chown -R tester .'
 chown -R tester .

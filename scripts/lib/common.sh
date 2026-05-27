@@ -46,5 +46,36 @@ require_var() {
   [[ -n "${!name:-}" ]] || die "Required variable $name is not set"
 }
 
+# Idempotent helpers (safe when resuming a partial build)
+ensure_group() {
+  local name=$1
+  shift || true
+  if getent group "$name" &>/dev/null; then
+    log "group ${name} already exists"
+    return 0
+  fi
+  groupadd "$name" "$@"
+}
+
+# ensure_user: pass useradd args with username as the LAST argument
+ensure_user() {
+  local name=${!#}
+  if getent passwd "$name" &>/dev/null; then
+    log "user ${name} already exists"
+    return 0
+  fi
+  useradd "$@"
+}
+
+safe_mount() {
+  local target=$1
+  shift
+  if mountpoint -q "$target" 2>/dev/null; then
+    log "already mounted: ${target}"
+    return 0
+  fi
+  mount "$@" "$target"
+}
+
 # Minimal logging inside chroot heredocs (no access to this file)
 CHROOT_LOG_INIT='log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }'

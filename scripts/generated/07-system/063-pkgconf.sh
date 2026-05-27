@@ -42,9 +42,9 @@ make
 log_step 3 4 'make install'
 make install
 
-log_step 4 4 'ln -sv pkgconf   /usr/bin/pkg-config'
-ln -sv pkgconf   /usr/bin/pkg-config
-ln -sv pkgconf.1 /usr/share/man/man1/pkg-config.1
+log_step 4 4 'ln -svf pkgconf   /usr/bin/pkg-config'
+ln -svf pkgconf   /usr/bin/pkg-config
+ln -svf pkgconf.1 /usr/share/man/man1/pkg-config.1
 
 CHROOT_EOF
 log "left chroot"

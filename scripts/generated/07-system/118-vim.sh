@@ -51,14 +51,14 @@ su tester -c "TERM=xterm-256color LANG="$LFS_LANG" make -j1 test" \
 log_step 6 13 'make install'
 make install
 
-log_step 7 13 'ln -sv vim /usr/bin/vi'
-ln -sv vim /usr/bin/vi
+log_step 7 13 'ln -svf vim /usr/bin/vi'
+ln -svf vim /usr/bin/vi
 for L in  /usr/share/man/{,*/}man1/vim.1; do
-    ln -sv vim.1 $(dirname $L)/vi.1
+ln -svf vim.1 $(dirname $L)/vi.1
 done
 
-log_step 8 13 'ln -sv ../vim/vim92/doc /usr/share/doc/vim-9.2.0078'
-ln -sv ../vim/vim92/doc /usr/share/doc/vim-9.2.0078
+log_step 8 13 'ln -svf ../vim/vim92/doc /usr/share/doc/vim-9.2.0078'
+ln -svf ../vim/vim92/doc /usr/share/doc/vim-9.2.0078
 
 log_step 9 13 'write configuration file'
 cat > /etc/vimrc << "EOF"
