@@ -11,12 +11,12 @@ trap 'log_fail $?' ERR
 
 require_var LFS
 
-log_step 1 5 'write configuration file'
+log_step 1 4 'write configuration file'
 cat > ~/.bash_profile << "EOF"
 exec env -i HOME=$HOME TERM=$TERM PS1='\u:\w\$ ' /bin/bash
 EOF
 
-log_step 2 5 'write configuration file'
+log_step 2 4 'write configuration file'
 cat > ~/.bashrc << "EOF"
 set +h
 umask 022
@@ -30,15 +30,12 @@ CONFIG_SITE=$LFS/usr/share/config.site
 export LFS LC_ALL LFS_TGT PATH CONFIG_SITE
 EOF
 
-log_step 3 5 '[ ! -e /etc/bash.bashrc ] || mv -v /etc/bash.bashrc /etc/bash.bashrc....'
-[ ! -e /etc/bash.bashrc ] || mv -v /etc/bash.bashrc /etc/bash.bashrc.NOUSE
-
-log_step 4 5 'write configuration file'
+log_step 3 4 'write configuration file'
 cat >> ~/.bashrc << "EOF"
 export MAKEFLAGS=-j$(nproc)
 EOF
 
-log_step 5 5 'source ~/.bash_profile'
+log_step 4 4 'source ~/.bash_profile'
 source ~/.bash_profile
 
 trap - ERR

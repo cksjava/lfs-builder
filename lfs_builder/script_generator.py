@@ -27,6 +27,8 @@ def _filter_commands(step: BuildStep, commands: list[str]) -> list[str]:
         if step.id == "environment":
             if cmd.strip() in ("make -j32", "export MAKEFLAGS=-j32"):
                 continue
+            if "bash.bashrc" in cmd:
+                continue  # book: run as root, handled by orchestrator
             if "LFS=/mnt/lfs" in cmd:
                 cmd = cmd.replace("LFS=/mnt/lfs", 'LFS="$LFS"')
         if step.id == "add-user" and cmd.strip() == "su - lfs":

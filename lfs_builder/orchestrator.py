@@ -117,6 +117,19 @@ class LFSOrchestrator:
             pass  # user not created yet
         return staged, stage_dir
 
+    def _disable_host_bash_bashrc(self) -> None:
+        """Book 4.4: move host /etc/bash.bashrc aside (requires root)."""
+        bashrc = Path("/etc/bash.bashrc")
+        nouse = Path("/etc/bash.bashrc.NOUSE")
+        if not bashrc.exists():
+            self._log("host /etc/bash.bashrc not present; skipping")
+            return
+        if nouse.exists():
+            self._log("host /etc/bash.bashrc already disabled")
+            return
+        self._log("moving /etc/bash.bashrc -> /etc/bash.bashrc.NOUSE")
+        shutil.move(bashrc, nouse)
+
     def _run_step(self, index: int, entry: dict) -> None:
         step_id = entry["id"]
         phase = entry["phase"]
@@ -152,6 +165,8 @@ class LFSOrchestrator:
 
         user = entry.get("user")
         if user == "lfs":
+            if step_id == "environment":
+                self._disable_host_bash_bashrc()
             run_script, builder_scripts = self._stage_script_for_lfs_user(script)
             lfs_env = {
                 **os.environ,
