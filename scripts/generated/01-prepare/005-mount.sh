@@ -6,7 +6,6 @@ set -euo pipefail
 source "$(dirname "$0")/../../lib/common.sh"
 
 require_var LFS
-
-chown root:root $LFS
-chmod 755 $LFS
-/sbin/swapon -v "$LFS_DEVICE"
+[ -d "${LFS}" ] || die "LFS not mounted — run partition step first"
+chown root:root "${LFS}" 2>/dev/null || true
+chmod 755 "${LFS}"

@@ -8,8 +8,19 @@ require_var LFS_FILESYSTEM
 
 log "Preparing LFS partition ${LFS_DEVICE} -> ${LFS_MOUNT}"
 
-if ! blkid "${LFS_DEVICE}" &>/dev/null; then
-  log "Creating ${LFS_FILESYSTEM} on ${LFS_DEVICE}"
+if [ ! -b "${LFS_DEVICE}" ]; then
+  log "Block devices:"
+  lsblk
+  die "${LFS_DEVICE} is not a block device — check lsblk and re-run the wizard"
+fi
+
+fs_type="$(blkid -o value -s TYPE "${LFS_DEVICE}" 2>/dev/null || true)"
+if [ "${fs_type}" != "${LFS_FILESYSTEM}" ]; then
+  if [ -n "${fs_type}" ]; then
+    log "Found ${fs_type} on ${LFS_DEVICE}; reformatting as ${LFS_FILESYSTEM}"
+  else
+    log "No filesystem on ${LFS_DEVICE}; creating ${LFS_FILESYSTEM}"
+  fi
   case "${LFS_FILESYSTEM}" in
     ext4) mkfs.ext4 -F "${LFS_DEVICE}" ;;
     ext3) mkfs.ext3 -F "${LFS_DEVICE}" ;;

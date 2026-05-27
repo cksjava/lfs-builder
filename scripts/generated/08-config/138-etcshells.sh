@@ -6,12 +6,3 @@
 set -euo pipefail
 source "$(dirname "$0")/../../lib/common.sh"
 
-require_var LFS
-chroot "${LFS}" /usr/bin/env -i \
-    HOME=/root TERM="${TERM:-linux}" PS1="(lfs chroot) \u:\w\$ " \
-    PATH=/usr/bin:/usr/sbin \
-    MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}" \
-    TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}" \
-    /bin/bash -euo pipefail <<'CHROOT_EOF'
-
-CHROOT_EOF

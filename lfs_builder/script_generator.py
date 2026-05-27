@@ -18,6 +18,19 @@ def _filter_commands(step: BuildStep, commands: list[str]) -> list[str]:
             continue
         if step.id == "mount" and "mkdir -pv $LFS" in cmd:
             continue
+        if step.id == "mount" and "swapon" in cmd:
+            continue
+        if step.id == "filesystem":
+            continue
+        if step.id == "aboutlfs" and "export LFS=" in cmd:
+            continue
+        if step.id == "environment":
+            if cmd.strip() in ("make -j32", "export MAKEFLAGS=-j32"):
+                continue
+            if "LFS=/mnt/lfs" in cmd:
+                cmd = cmd.replace("LFS=/mnt/lfs", 'LFS="$LFS"')
+        if step.id == "add-user" and cmd.strip() == "su - lfs":
+            continue
         if cmd.strip().startswith("passwd "):
             continue
         if step.id == "kernel" and "menuconfig" in cmd:
@@ -125,9 +138,20 @@ def generate_step_script(
     if step.kind == StepKind.PACKAGE:
         pkg_dir = package_dir_from_page(html_path)
         lines.extend(_package_preamble(pkg_dir, book_meta.name))
-    elif step.id in ("host-check", "filesystem", "aboutlfs", "mount"):
+    elif step.id in ("host-check", "aboutlfs"):
         lines.append('require_var LFS')
         lines.append("")
+    elif step.id == "filesystem":
+        # Formatting is handled by scripts/phases/01-partition.sh
+        lines = _script_header(step, book_meta.name)
+        lines.append('echo "Skipping: partition formatted by 01-partition.sh"')
+    elif step.id == "mount":
+        # Mount/swap handled by 01-partition.sh; only apply book ownership perms if needed
+        lines = _script_header(step, book_meta.name)
+        lines.append('require_var LFS')
+        lines.append('[ -d "${LFS}" ] || die "LFS not mounted — run partition step first"')
+        lines.append('chown root:root "${LFS}" 2>/dev/null || true')
+        lines.append('chmod 755 "${LFS}"')
     elif step.chroot:
         pass
     else:
@@ -135,13 +159,16 @@ def generate_step_script(
         lines.append("")
 
     body = list(commands)
+    if step.id in ("filesystem", "mount"):
+        body = []
     if not body and step.kind == StepKind.PACKAGE:
         body = ['echo "WARNING: no commands extracted"']
 
-    if step.chroot:
-        lines.extend(_wrap_chroot(body))
-    else:
-        lines.extend(body)
+    if body:
+        if step.chroot:
+            lines.extend(_wrap_chroot(body))
+        else:
+            lines.extend(body)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     content = "\n".join(lines) + "\n"

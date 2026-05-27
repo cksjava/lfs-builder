@@ -7,6 +7,5 @@ source "$(dirname "$0")/../../lib/common.sh"
 
 require_var LFS
 
-export LFS=/mnt/lfs
 umask 022
 umask

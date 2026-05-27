@@ -5,7 +5,4 @@
 set -euo pipefail
 source "$(dirname "$0")/../../lib/common.sh"
 
-require_var LFS
-
-mkfs -v -t ext4 "$LFS_DEVICE"
-mkswap "$LFS_DEVICE"
+echo "Skipping: partition formatted by 01-partition.sh"
