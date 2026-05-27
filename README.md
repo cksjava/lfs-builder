@@ -5,7 +5,7 @@ Unattended build orchestrator for [Linux From Scratch](https://www.linuxfromscra
 ## Features
 
 - Interactive wizard for partition, mount point, timezone, keymap, locale, hostname, GRUB disk, and parallel jobs
-- Downloads all sources and patches from bundled `data/wget-list-systemd` with MD5 verification (mirrors fixed when book URLs fail)
+- Downloads all sources and patches in one shot via `lfs-packages-VERSION.tar` from LFS file mirrors (book version → tarball name); falls back to `wget-list-systemd` if mirrors fail
 - Executes book installation commands in chapter order (cross toolchain → temp tools → chroot → system → config → kernel/GRUB)
 - Handles chroot enter/exit, virtual kernel filesystem mounts, and `lfs` user builds
 - **Quiet** (default) or **verbose** (`-v`) logging
@@ -42,9 +42,12 @@ After cloning:
 ```bash
 cd lfs-builder
 ./download-book.sh               # fetch LFS-BOOK-13.0.tar.xz → ../13.0/
+./download-packages.sh           # optional: fetch lfs-packages-13.0.tar → ../sources-cache/
 sudo ./prep.sh                   # apt install; runs ./version-check.sh at the end
 ./version-check.sh               # optional: run again as a normal user
 ```
+
+During the build, sources are installed into `$LFS/sources` from `lfs-packages-13.0.tar` (version taken from the book path). To force per-URL downloads instead: `LFS_USE_WGET_LIST=1 ./build_lfs.py`.
 
 Equivalent via the orchestrator:
 
@@ -86,6 +89,7 @@ Answer the prompts once. The script elevates to root and runs through all phases
 ```
 lfs-builder/
   download-book.sh       # Download and extract LFS-BOOK-13.0.tar.xz → ../13.0/
+  download-packages.sh   # Download lfs-packages-13.0.tar (all sources + patches)
   prep.sh                # Standalone Debian/Ubuntu host prep (chapter 2.2)
   version-check.sh       # Book version-check script (+ makeinfo/msgfmt for Glibc)
   build_lfs.py           # Main entry point

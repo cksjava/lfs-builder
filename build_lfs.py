@@ -42,6 +42,7 @@ def _make_scripts_executable() -> None:
         _ROOT / "version-check.sh",
         _ROOT / "prep.sh",
         _ROOT / "download-book.sh",
+        _ROOT / "download-packages.sh",
         _ROOT / "data" / "version-check.sh",
     ):
         if vc.is_file():

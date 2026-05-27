@@ -9,6 +9,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from .book_version import book_version
 from .config import LFSConfig, load_config, run_wizard
 from .elevate import drop_to_user, ensure_root
 from .manifest import StepKind, build_manifest
@@ -77,6 +78,7 @@ class LFSOrchestrator:
             "LFS_MOUNT": self.cfg.lfs_mount,
             "LFS_SOURCES": self.cfg.sources,
             "LFS_BOOK": str(self.book_path),
+            "LFS_BOOK_VERSION": book_version(self.book_path),
             "LFS_BUILD_USER": self.cfg.build_user,
             "LFS_HOSTNAME": self.cfg.hostname,
             "LFS_TIMEZONE": self.cfg.timezone,

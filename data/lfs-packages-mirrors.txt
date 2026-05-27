@@ -1,0 +1,6 @@
+# Base URLs for lfs-packages-VERSION.tar (append lfs-packages-13.0.tar).
+# Tried in order until one succeeds.
+https://ftp.lfs-matrix.net/pub/lfs/lfs-packages/
+https://ftp.osuosl.org/pub/lfs/lfs-packages/
+https://lfs.gnlug.org/pub/lfs/lfs-packages/
+https://mirror.download.it/lfs/pub/lfs-packages/
