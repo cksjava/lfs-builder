@@ -19,6 +19,7 @@ sys.path.insert(0, str(_ROOT))
 
 from lfs_builder.config import default_config_path, load_config, run_wizard, save_config
 from lfs_builder.elevate import ensure_root
+from lfs_builder.host_requirements import run_host_check, run_host_prepare
 from lfs_builder.orchestrator import LFSOrchestrator
 
 
@@ -37,6 +38,9 @@ def _make_scripts_executable() -> None:
     for sh in (_ROOT / "scripts").rglob("*.sh"):
         mode = sh.stat().st_mode
         sh.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    vc = _ROOT / "data" / "version-check.sh"
+    if vc.is_file():
+        vc.chmod(vc.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 
 def main() -> int:
@@ -104,6 +108,21 @@ Examples:
         action="store_true",
         help="Run configuration wizard even if config exists",
     )
+    parser.add_argument(
+        "--check-host",
+        action="store_true",
+        help="Verify host meets LFS chapter 2.2 requirements and exit",
+    )
+    parser.add_argument(
+        "--prepare-host",
+        action="store_true",
+        help="Install host packages (apt/dnf) and verify; exit without building",
+    )
+    parser.add_argument(
+        "--skip-host-prepare",
+        action="store_true",
+        help="Do not install host packages during the build (still runs version check)",
+    )
     args = parser.parse_args()
 
     _make_scripts_executable()
@@ -123,6 +142,18 @@ Examples:
     work_dir = args.work_dir.resolve()
     work_dir.mkdir(parents=True, exist_ok=True)
     config_path = args.config or default_config_path(work_dir)
+
+    scripts_dir = _ROOT / "scripts"
+
+    if args.check_host or args.prepare_host:
+        ensure_root()
+        if args.prepare_host:
+            rc = run_host_prepare(scripts_dir, skip=False)
+            if rc != 0:
+                return rc
+        if args.check_host:
+            return run_host_check(scripts_dir)
+        return 0
 
     if args.cleanup:
         ensure_root()
@@ -146,13 +177,27 @@ Examples:
         cfg.verbose = True
     if args.quiet:
         cfg.verbose = False
+    if args.skip_host_prepare:
+        cfg.prepare_host = False
 
     save_config(cfg, config_path)
 
+    ensure_root()
+    start_step = args.from_step
+    if args.resume and start_step is None:
+        start_step = LFSOrchestrator(book, work_dir, cfg)._state.get("step_index", 0)
+
+    if start_step in (None, 0):
+        if cfg.prepare_host and not args.skip_host_prepare:
+            rc = run_host_prepare(scripts_dir, skip=False)
+            if rc != 0:
+                return rc
+        rc = run_host_check(scripts_dir)
+        if rc != 0:
+            return rc
+
     orch = LFSOrchestrator(book, work_dir, cfg)
-    from_step = args.from_step
-    if args.resume and from_step is None:
-        from_step = orch._state.get("step_index", 0)
+    from_step = start_step
 
     try:
         orch.run(from_step=from_step)

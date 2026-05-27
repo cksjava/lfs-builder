@@ -17,7 +17,7 @@ Unattended build orchestrator for [Linux From Scratch](https://www.linuxfromscra
 
 ## Requirements
 
-- Host meets LFS 13.0 [host requirements](https://www.linuxfromscratch.org/lfs/view/stable/chapter02/hostreqs.html)
+- Host meets LFS 13.0 [host requirements](https://www.linuxfromscratch.org/lfs/view/stable/chapter02/hostreqs.html) — verified automatically before partitioning
 - `python3`, `bash`, `wget`, `sudo`, root access
 - Extracted book: `../13.0/` (from `LFS-BOOK-13.0.tar.xz`) — used for build instructions only; sources come from `data/`
 - Empty partition(s) for LFS (and optional `/boot`, swap)
@@ -35,10 +35,21 @@ This writes **139 shell scripts** under `scripts/generated/<phase>/` plus `manif
 
 ## Quick start
 
+Prepare and verify the host (chapter 2.2) before the full build:
+
 ```bash
 cd lfs-builder
+./build_lfs.py --prepare-host    # apt install build deps on Debian/Ubuntu
+./build_lfs.py --check-host      # version-check only
+```
+
+Full build (host prepare + check run automatically before step 1 on a fresh build):
+
+```bash
 ./build_lfs.py
 ```
+
+Use `--skip-host-prepare` if packages are already installed. Resume skips host prep/check.
 
 Answer the prompts once. The script elevates to root and runs through all phases until GRUB is installed.
 

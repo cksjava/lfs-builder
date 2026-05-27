@@ -51,7 +51,6 @@ CH7_AFTER = [
 
 # Non-package chapters rendered as setup pages
 CH2_SETUP = [
-    ("host-check", "hostreqs.html"),
     ("filesystem", "creatingfilesystem.html"),
     ("aboutlfs", "aboutlfs.html"),
     ("mount", "mounting.html"),

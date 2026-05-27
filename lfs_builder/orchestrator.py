@@ -86,6 +86,8 @@ class LFSOrchestrator:
             "PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
             "LFS_BUILDER_SCRIPTS": str(self.scripts_dir),
         }
+        if not self.cfg.prepare_host:
+            env["LFS_SKIP_HOST_PREPARE"] = "1"
         if self.cfg.root_password:
             env["LFS_ROOT_PASSWORD"] = self.cfg.root_password
         return env

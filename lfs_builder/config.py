@@ -38,6 +38,7 @@ class LFSConfig:
     work_dir: str = ""
     verbose: bool = True
     kernel_use_host_config: bool = True
+    prepare_host: bool = True
     extra: dict[str, Any] = field(default_factory=dict)
 
     @property

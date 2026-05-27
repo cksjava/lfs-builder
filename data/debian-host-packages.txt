@@ -1,0 +1,21 @@
+# Debian/Ubuntu packages covering LFS 13.0-systemd chapter 2.2 host requirements.
+build-essential
+bison
+flex
+gawk
+gettext
+texinfo
+wget
+xz-utils
+patch
+perl
+python3
+m4
+gcc
+g++
+libc6-dev
+file
+gperf
+bc
+rsync
+ca-certificates
