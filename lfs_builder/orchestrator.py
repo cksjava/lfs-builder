@@ -121,7 +121,16 @@ class LFSOrchestrator:
         shutil.copy2(self.scripts_dir / "lib" / "common.sh", lib_dir / "common.sh")
 
         staged = stage_dir / f"{script.parent.name}-{script.name}"
-        shutil.copy2(script, staged)
+        text = script.read_text(encoding="utf-8")
+        text = text.replace(
+            'source "$(dirname "$0")/../lib/common.sh"',
+            'source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"',
+        )
+        text = text.replace(
+            'source "$(dirname "$0")/../../lib/common.sh"',
+            'source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"',
+        )
+        staged.write_text(text, encoding="utf-8")
         staged.chmod(0o755)
         (lib_dir / "common.sh").chmod(0o644)
 

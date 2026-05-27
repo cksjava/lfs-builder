@@ -1,7 +1,7 @@
 #!/bin/bash
 # Create config.site to block host autotools settings (chapter 4).
 set -euo pipefail
-source "$(dirname "$0")/../lib/common.sh"
+source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"
 LFS_STEP_ID="04-config-site"
 log_begin
 trap 'log_fail $?' ERR

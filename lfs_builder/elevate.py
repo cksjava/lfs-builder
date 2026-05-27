@@ -23,12 +23,23 @@ def ensure_root() -> None:
     )
 
 
+def _resolve_priv_cmd(name: str) -> str | None:
+    """Locate runuser/su even when caller PATH omits /usr/sbin."""
+    found = shutil.which(name)
+    if found:
+        return found
+    for candidate in (f"/usr/sbin/{name}", f"/sbin/{name}", f"/bin/{name}"):
+        if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+            return candidate
+    return None
+
+
 def drop_to_user(username: str, command: list[str], env: dict[str, str] | None = None) -> int:
-    runuser = shutil.which("runuser")
+    runuser = _resolve_priv_cmd("runuser")
     if runuser:
-        cmd = ["runuser", "-u", username, "--", *command]
+        cmd = [runuser, "-u", username, "--", *command]
     else:
-        su = shutil.which("su")
+        su = _resolve_priv_cmd("su")
         if not su:
             print("Neither runuser nor su found.", file=sys.stderr)
             return 127
