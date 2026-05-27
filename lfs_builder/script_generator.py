@@ -104,7 +104,7 @@ def _emit_logged_commands(commands: list[str], *, chroot: bool = False) -> list[
 
 
 def _script_header(step: BuildStep, meta_name: str | None) -> list[str]:
-    lib = 'source "$(dirname "$0")/../../lib/common.sh"'
+    lib = 'source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"'
     lines = [
         "#!/bin/bash",
         f"# LFS 13.0-systemd — {step.phase} / {step.id}",
@@ -293,7 +293,7 @@ def generate_all(
         """#!/bin/bash
 # Seed kernel .config from host — invoked by orchestrator before 0NN-kernel.sh
 set -euo pipefail
-source "$(dirname "$0")/../../lib/common.sh"
+source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"
 LFS_STEP_ID="09-bootable/kernel-host-config"
 log_begin
 trap 'log_fail $?' ERR

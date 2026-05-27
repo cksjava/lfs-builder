@@ -4,7 +4,7 @@
 # libpipeline
 # RUN_IN_CHROOT: yes
 set -euo pipefail
-source "$(dirname "$0")/../../lib/common.sh"
+source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"
 LFS_STEP_ID="07-system/libpipeline"
 log_begin
 trap 'log_fail $?' ERR

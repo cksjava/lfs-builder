@@ -3,7 +3,7 @@
 # Generated from book; do not edit — re-run generate_scripts.py
 # hostreqs
 set -euo pipefail
-source "$(dirname "$0")/../../lib/common.sh"
+source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"
 LFS_STEP_ID="01-prepare/host-check"
 log_begin
 trap 'log_fail $?' ERR

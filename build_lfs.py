@@ -34,13 +34,9 @@ def _default_work() -> Path:
 
 
 def _make_scripts_executable() -> None:
-    phases = _ROOT / "scripts" / "phases"
-    for sh in phases.glob("*.sh"):
+    for sh in (_ROOT / "scripts").rglob("*.sh"):
         mode = sh.stat().st_mode
         sh.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-    lib = _ROOT / "scripts" / "lib" / "common.sh"
-    if lib.exists():
-        lib.chmod(lib.stat().st_mode | stat.S_IXUSR)
 
 
 def main() -> int:

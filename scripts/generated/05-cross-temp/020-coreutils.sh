@@ -4,7 +4,7 @@
 # coreutils
 # RUN_AS: lfs
 set -euo pipefail
-source "$(dirname "$0")/../../lib/common.sh"
+source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"
 LFS_STEP_ID="05-cross-temp/coreutils"
 log_begin
 trap 'log_fail $?' ERR

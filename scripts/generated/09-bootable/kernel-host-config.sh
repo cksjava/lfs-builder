@@ -1,7 +1,7 @@
 #!/bin/bash
 # Seed kernel .config from host — invoked by orchestrator before 0NN-kernel.sh
 set -euo pipefail
-source "$(dirname "$0")/../../lib/common.sh"
+source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"
 LFS_STEP_ID="09-bootable/kernel-host-config"
 log_begin
 trap 'log_fail $?' ERR

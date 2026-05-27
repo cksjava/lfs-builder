@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import os
+import pwd
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -82,6 +84,7 @@ class LFSOrchestrator:
             "MAKEFLAGS": f"-j{nproc}",
             "TESTSUITEFLAGS": f"-j{nproc}",
             "PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
+            "LFS_BUILDER_SCRIPTS": str(self.scripts_dir),
         }
         if self.cfg.root_password:
             env["LFS_ROOT_PASSWORD"] = self.cfg.root_password
@@ -90,6 +93,27 @@ class LFSOrchestrator:
     def _script_path(self, entry: dict) -> Path:
         rel = entry["script"]
         return self.scripts_dir / rel
+
+    def _stage_script_for_lfs_user(self, script: Path) -> Path:
+        """Copy script under $LFS/sources so user lfs can read and execute it."""
+        stage_dir = Path(self.cfg.sources) / ".lfs-builder-run"
+        stage_dir.mkdir(parents=True, exist_ok=True)
+        staged = stage_dir / f"{script.parent.name}-{script.name}"
+        lib = self.scripts_dir / "lib" / "common.sh"
+        text = script.read_text(encoding="utf-8")
+        text = text.replace(
+            'source "$(dirname "$0")/../../lib/common.sh"',
+            f'source "{lib}"',
+        )
+        staged.write_text(text, encoding="utf-8")
+        staged.chmod(0o755)
+        try:
+            pw = pwd.getpwnam(self.cfg.build_user)
+            os.chown(staged, pw.pw_uid, pw.pw_gid)
+            os.chown(stage_dir, pw.pw_uid, pw.pw_gid)
+        except KeyError:
+            pass  # user not created yet
+        return staged
 
     def _run_step(self, index: int, entry: dict) -> None:
         step_id = entry["id"]
@@ -126,9 +150,10 @@ class LFSOrchestrator:
 
         user = entry.get("user")
         if user == "lfs":
+            run_script = self._stage_script_for_lfs_user(script)
             rc = drop_to_user(
                 self.cfg.build_user,
-                ["bash", "-e", str(script)],
+                ["bash", "-e", str(run_script)],
                 env={**os.environ, **env, "HOME": f"/home/{self.cfg.build_user}"},
             )
             if rc != 0:
