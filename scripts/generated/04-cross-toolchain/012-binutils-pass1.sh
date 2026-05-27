@@ -5,18 +5,27 @@
 # RUN_AS: lfs
 set -euo pipefail
 source "$(dirname "$0")/../../lib/common.sh"
+LFS_STEP_ID="04-cross-toolchain/binutils-pass1"
+log_begin
+trap 'log_fail $?' ERR
 
 # Package: binutils-pass1
+log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+log "extract source tarball (if needed)"
 TARBALL=$(ls -1 binutils-2.46.0*.tar.* 2>/dev/null | head -1)
 if [ -n "$TARBALL" ] && [ ! -d "binutils-2.46.0" ]; then
-  echo "Extracting $TARBALL..."
+  log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
 cd "binutils-2.46.0"
+log "Building in $(pwd)"
 
+log_step 1 4 'mkdir -v build'
 mkdir -v build
 cd       build
+
+log_step 2 4 'configure'
 ../configure --prefix=$LFS/tools \
              --with-sysroot=$LFS \
              --target=$LFS_TGT   \
@@ -25,5 +34,13 @@ cd       build
              --disable-werror    \
              --enable-new-dtags  \
              --enable-default-hash-style=gnu
+
+log_step 3 4 'make'
 make
+
+log_step 4 4 'make install'
 make install
+
+trap - ERR
+log_done
+

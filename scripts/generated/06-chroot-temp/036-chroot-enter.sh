@@ -4,6 +4,12 @@
 # chroot
 set -euo pipefail
 source "$(dirname "$0")/../../lib/common.sh"
+LFS_STEP_ID="06-chroot-temp/chroot-enter"
+log_begin
+trap 'log_fail $?' ERR
 
 require_var LFS
+
+trap - ERR
+log_done
 

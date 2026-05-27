@@ -5,4 +5,10 @@
 # RUN_IN_CHROOT: yes
 set -euo pipefail
 source "$(dirname "$0")/../../lib/common.sh"
+LFS_STEP_ID="08-config/udev"
+log_begin
+trap 'log_fail $?' ERR
+
+trap - ERR
+log_done
 

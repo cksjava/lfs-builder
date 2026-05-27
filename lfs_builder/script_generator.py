@@ -51,6 +51,58 @@ def _normalize_commands(commands: list[str]) -> list[str]:
     return [b.strip() for b in text.split("\n\n") if b.strip()]
 
 
+def _shell_quote(s: str) -> str:
+    return "'" + s.replace("'", "'\"'\"'") + "'"
+
+
+def _command_label(cmd: str) -> str:
+    """Short human-readable label for a command block."""
+    first = cmd.strip().split("\n")[0].strip()
+    lower = cmd.lower()
+    if "../configure" in lower or "./configure" in lower or first.startswith("../configure"):
+        return "configure"
+    if re.search(r"\bmake\s+install\b", lower):
+        return "make install"
+    if "make install" in lower and "DESTDIR" in cmd:
+        return "make install (DESTDIR)"
+    if re.search(r"\bmake\s+-k\s+check\b", lower) or "make check" in lower:
+        return "make check (test suite)"
+    if re.search(r"^make\b", first, re.I) or first == "make":
+        return "make"
+    if first.startswith("tar ") or "\ntar " in cmd:
+        return "extract source archive"
+    if "patch -" in lower:
+        return "apply patch"
+    if first.startswith("mkdir "):
+        return first[:72]
+    if "cat >" in lower or "cat <<" in lower:
+        return "write configuration file"
+    if first.startswith("ln -"):
+        return first[:72]
+    if first.startswith("chown ") or first.startswith("chmod "):
+        return first[:72]
+    if first.startswith("mount "):
+        return first[:72]
+    if len(first) > 72:
+        return first[:69] + "..."
+    return first or "run command"
+
+
+def _emit_logged_commands(commands: list[str], *, chroot: bool = False) -> list[str]:
+    """Prefix each command block with log_step."""
+    lines: list[str] = []
+    total = len(commands)
+    if chroot:
+        lines.append('log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }')
+        lines.append("")
+    for i, cmd in enumerate(commands, 1):
+        label = _command_label(cmd)
+        lines.append(f"log_step {i} {total} {_shell_quote(label)}")
+        lines.extend(cmd.split("\n"))
+        lines.append("")
+    return lines
+
+
 def _script_header(step: BuildStep, meta_name: str | None) -> list[str]:
     lib = 'source "$(dirname "$0")/../../lib/common.sh"'
     lines = [
@@ -64,8 +116,21 @@ def _script_header(step: BuildStep, meta_name: str | None) -> list[str]:
         lines.append("# RUN_AS: lfs")
     if step.chroot:
         lines.append("# RUN_IN_CHROOT: yes")
-    lines.extend(["set -euo pipefail", lib, ""])
+    lines.extend(
+        [
+            "set -euo pipefail",
+            lib,
+            f'LFS_STEP_ID="{step.phase}/{step.id}"',
+            "log_begin",
+            'trap \'log_fail $?\' ERR',
+            "",
+        ]
+    )
     return lines
+
+
+def _script_footer() -> list[str]:
+    return ["trap - ERR", "log_done", ""]
 
 
 def _package_preamble(tarball: str | None, meta_name: str) -> list[str]:
@@ -73,13 +138,16 @@ def _package_preamble(tarball: str | None, meta_name: str) -> list[str]:
         return []
     return [
         f"# Package: {meta_name}",
+        'log "enter sources directory"',
         'cd "${LFS_SOURCES:?}"',
+        'log "extract source tarball (if needed)"',
         f'TARBALL=$(ls -1 {tarball}*.tar.* 2>/dev/null | head -1)',
         f'if [ -n "$TARBALL" ] && [ ! -d "{tarball}" ]; then',
-        '  echo "Extracting $TARBALL..."',
+        '  log "Extracting $TARBALL"',
         '  tar -xf "$TARBALL"',
         "fi",
         f'cd "{tarball}"',
+        'log "Building in $(pwd)"',
         "",
     ]
 
@@ -88,6 +156,7 @@ def _wrap_chroot(body_lines: list[str]) -> list[str]:
     body = "\n".join(body_lines)
     return [
         'require_var LFS',
+        'log "entering chroot at ${LFS}"',
         'chroot "${LFS}" /usr/bin/env -i \\',
         '    HOME=/root TERM="${TERM:-linux}" PS1="(lfs chroot) \\u:\\w\\$ " \\',
         '    PATH=/usr/bin:/usr/sbin \\',
@@ -96,6 +165,7 @@ def _wrap_chroot(body_lines: list[str]) -> list[str]:
         "    /bin/bash -euo pipefail <<'CHROOT_EOF'",
         body,
         "CHROOT_EOF",
+        'log "left chroot"',
     ]
 
 
@@ -142,16 +212,18 @@ def generate_step_script(
         lines.append('require_var LFS')
         lines.append("")
     elif step.id == "filesystem":
-        # Formatting is handled by scripts/phases/01-partition.sh
         lines = _script_header(step, book_meta.name)
-        lines.append('echo "Skipping: partition formatted by 01-partition.sh"')
+        lines.append('log "Skipping: partition formatted by 01-partition.sh"')
+        lines.extend(_script_footer())
     elif step.id == "mount":
-        # Mount/swap handled by 01-partition.sh; only apply book ownership perms if needed
         lines = _script_header(step, book_meta.name)
         lines.append('require_var LFS')
         lines.append('[ -d "${LFS}" ] || die "LFS not mounted — run partition step first"')
+        lines.append('log_step 1 2 "set LFS mount ownership"')
         lines.append('chown root:root "${LFS}" 2>/dev/null || true')
+        lines.append('log_step 2 2 "set LFS mount permissions"')
         lines.append('chmod 755 "${LFS}"')
+        lines.extend(_script_footer())
     elif step.chroot:
         pass
     else:
@@ -165,10 +237,14 @@ def generate_step_script(
         body = ['echo "WARNING: no commands extracted"']
 
     if body:
+        logged = _emit_logged_commands(body, chroot=step.chroot)
         if step.chroot:
-            lines.extend(_wrap_chroot(body))
+            lines.extend(_wrap_chroot(logged))
         else:
-            lines.extend(body)
+            lines.extend(logged)
+
+    if step.id not in ("filesystem", "mount"):
+        lines.extend(_script_footer())
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     content = "\n".join(lines) + "\n"
@@ -218,37 +294,49 @@ def generate_all(
 # Seed kernel .config from host — invoked by orchestrator before 0NN-kernel.sh
 set -euo pipefail
 source "$(dirname "$0")/../../lib/common.sh"
+LFS_STEP_ID="09-bootable/kernel-host-config"
+log_begin
+trap 'log_fail $?' ERR
+
 require_var LFS_SOURCES
+log_step 1 4 "locate Linux source tree"
 LINUX_DIR=$(ls -d "${LFS_SOURCES}"/linux-* 2>/dev/null | head -1)
 if [ -z "$LINUX_DIR" ]; then
-  echo "Linux source tree not found in ${LFS_SOURCES}" >&2
-  exit 1
+  die "Linux source tree not found in ${LFS_SOURCES}"
 fi
 cd "$LINUX_DIR"
+log "Using ${LINUX_DIR}"
+
+log_step 2 4 "copy host kernel config"
 HOST_CFG=""
 for c in "/boot/config-$(uname -r)" /proc/config.gz /boot/config; do
   [ -e "$c" ] && HOST_CFG=$c && break
 done
-if [ -n "$HOST_CFG" ]; then
-  echo "Using host config: $HOST_CFG"
-  if [[ "$HOST_CFG" == *.gz ]]; then
-    zcat "$HOST_CFG" > .config
-  else
-    cp "$HOST_CFG" .config
-  fi
-  make olddefconfig
-  if [ -x scripts/config ]; then
-    scripts/config --disable WERROR --enable CGROUPS --enable MEMCG \\
-      --enable INOTIFY_USER --enable SIGNALFD --enable TIMERFD --enable EPOLL \\
-      --enable TMPFS --enable TMPFS_POSIX_ACL --enable DEVTMPFS \\
-      --enable DEVTMPFS_MOUNT --disable UEVENT_HELPER --enable NET \\
-      --enable INET --enable IPV6 --enable PSI || true
-    make olddefconfig
-  fi
-else
-  echo "No host kernel config found; run make defconfig manually" >&2
-  exit 1
+if [ -z "$HOST_CFG" ]; then
+  die "No host kernel config found; run make defconfig manually"
 fi
+log "Host config: $HOST_CFG"
+if [[ "$HOST_CFG" == *.gz ]]; then
+  zcat "$HOST_CFG" > .config
+else
+  cp "$HOST_CFG" .config
+fi
+
+log_step 3 4 "apply olddefconfig"
+make olddefconfig
+
+log_step 4 4 "enable LFS mandatory kernel options"
+if [ -x scripts/config ]; then
+  scripts/config --disable WERROR --enable CGROUPS --enable MEMCG \\
+    --enable INOTIFY_USER --enable SIGNALFD --enable TIMERFD --enable EPOLL \\
+    --enable TMPFS --enable TMPFS_POSIX_ACL --enable DEVTMPFS \\
+    --enable DEVTMPFS_MOUNT --disable UEVENT_HELPER --enable NET \\
+    --enable INET --enable IPV6 --enable PSI || true
+  make olddefconfig
+fi
+
+trap - ERR
+log_done
 """,
         encoding="utf-8",
     )

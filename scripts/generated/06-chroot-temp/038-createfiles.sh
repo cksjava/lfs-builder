@@ -5,19 +5,30 @@
 # RUN_IN_CHROOT: yes
 set -euo pipefail
 source "$(dirname "$0")/../../lib/common.sh"
+LFS_STEP_ID="06-chroot-temp/createfiles"
+log_begin
+trap 'log_fail $?' ERR
 
 require_var LFS
+log "entering chroot at ${LFS}"
 chroot "${LFS}" /usr/bin/env -i \
     HOME=/root TERM="${TERM:-linux}" PS1="(lfs chroot) \u:\w\$ " \
     PATH=/usr/bin:/usr/sbin \
     MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}" \
     TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}" \
     /bin/bash -euo pipefail <<'CHROOT_EOF'
+log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
+
+log_step 1 7 'ln -sv /proc/self/mounts /etc/mtab'
 ln -sv /proc/self/mounts /etc/mtab
+
+log_step 2 7 'write configuration file'
 cat > /etc/hosts << EOF
 127.0.0.1  localhost $(hostname)
 ::1        localhost
 EOF
+
+log_step 3 7 'write configuration file'
 cat > /etc/passwd << "EOF"
 root:x:0:0:root:/root:/bin/bash
 bin:x:1:1:bin:/dev/null:/usr/bin/false
@@ -34,6 +45,8 @@ uuidd:x:80:80:UUID Generation Daemon User:/dev/null:/usr/bin/false
 systemd-oom:x:81:81:systemd Out Of Memory Daemon:/:/usr/bin/false
 nobody:x:65534:65534:Unprivileged User:/dev/null:/usr/bin/false
 EOF
+
+log_step 4 7 'write configuration file'
 cat > /etc/group << "EOF"
 root:x:0:
 bin:x:1:daemon
@@ -70,12 +83,23 @@ wheel:x:97:
 users:x:999:
 nogroup:x:65534:
 EOF
+
+log_step 5 7 'echo "tester:x:101:101::/home/tester:/bin/bash" >> /etc/passwd'
 echo "tester:x:101:101::/home/tester:/bin/bash" >> /etc/passwd
 echo "tester:x:101:" >> /etc/group
 install -o tester -d /home/tester
+
+log_step 6 7 'exec /usr/bin/bash --login'
 exec /usr/bin/bash --login
+
+log_step 7 7 'touch /var/log/{btmp,lastlog,faillog,wtmp}'
 touch /var/log/{btmp,lastlog,faillog,wtmp}
 chgrp -v utmp /var/log/lastlog
 chmod -v 664  /var/log/lastlog
 chmod -v 600  /var/log/btmp
+
 CHROOT_EOF
+log "left chroot"
+trap - ERR
+log_done
+

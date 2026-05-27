@@ -4,5 +4,11 @@
 # creatingfilesystem
 set -euo pipefail
 source "$(dirname "$0")/../../lib/common.sh"
+LFS_STEP_ID="01-prepare/filesystem"
+log_begin
+trap 'log_fail $?' ERR
 
-echo "Skipping: partition formatted by 01-partition.sh"
+log "Skipping: partition formatted by 01-partition.sh"
+trap - ERR
+log_done
+

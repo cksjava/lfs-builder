@@ -1,6 +1,11 @@
 #!/bin/bash
 # Download sources and patches per chapter 3.
+set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"
+LFS_STEP_ID="03-download"
+log_begin
+trap 'log_fail $?' ERR
+
 require_root
 require_var LFS_MOUNT
 require_var LFS_BOOK
@@ -12,7 +17,7 @@ DEST="${LFS}/sources"
 
 [[ -f "${LIST}" ]] || die "wget list not found: ${LIST}"
 
-log "Downloading packages to ${DEST} (this may take a while)"
+log_step 1 3 "download packages to ${DEST}"
 mkdir -pv "${DEST}"
 cd "${DEST}"
 
@@ -22,11 +27,17 @@ else
   die "wget is required for downloads"
 fi
 
+log_step 2 3 "verify checksums"
 if [[ -f "${MD5}" ]]; then
-  log "Verifying checksums"
   cp "${MD5}" "${DEST}/"
   cd "${DEST}"
   md5sum -c md5sums || die "Checksum verification failed"
+else
+  log "no md5sums file; skipping verification"
 fi
 
-log "Downloads complete"
+log_step 3 3 "downloads complete"
+log "All sources in ${DEST}"
+
+trap - ERR
+log_done

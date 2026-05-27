@@ -5,30 +5,43 @@
 # RUN_AS: lfs
 set -euo pipefail
 source "$(dirname "$0")/../../lib/common.sh"
+LFS_STEP_ID="04-cross-toolchain/gcc-pass1"
+log_begin
+trap 'log_fail $?' ERR
 
 # Package: gcc-pass1
+log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+log "extract source tarball (if needed)"
 TARBALL=$(ls -1 gcc-15.2.0*.tar.* 2>/dev/null | head -1)
 if [ -n "$TARBALL" ] && [ ! -d "gcc-15.2.0" ]; then
-  echo "Extracting $TARBALL..."
+  log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
 cd "gcc-15.2.0"
+log "Building in $(pwd)"
 
+log_step 1 7 'extract source archive'
 tar -xf ../mpfr-4.2.2.tar.xz
 mv -v mpfr-4.2.2 mpfr
 tar -xf ../gmp-6.3.0.tar.xz
 mv -v gmp-6.3.0 gmp
 tar -xf ../mpc-1.3.1.tar.gz
 mv -v mpc-1.3.1 mpc
+
+log_step 2 7 'case $(uname -m) in'
 case $(uname -m) in
   x86_64)
     sed -e '/m64=/s/lib64/lib/' \
         -i.orig gcc/config/i386/t-linux64
  ;;
 esac
+
+log_step 3 7 'mkdir -v build'
 mkdir -v build
 cd       build
+
+log_step 4 7 'configure'
 ../configure                  \
     --target=$LFS_TGT         \
     --prefix=$LFS/tools       \
@@ -49,8 +62,18 @@ cd       build
     --disable-libvtv          \
     --disable-libstdcxx       \
     --enable-languages=c,c++
+
+log_step 5 7 'make'
 make
+
+log_step 6 7 'make install'
 make install
+
+log_step 7 7 'cd ..'
 cd ..
 cat gcc/limitx.h gcc/glimits.h gcc/limity.h > \
   `dirname $($LFS_TGT-gcc -print-libgcc-file-name)`/include/limits.h
+
+trap - ERR
+log_done
+
