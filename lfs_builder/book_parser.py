@@ -147,19 +147,35 @@ def _page_title(html_path: Path) -> str | None:
 
 def package_dir_from_page(html_path: Path) -> str | None:
     """Source directory name (e.g. binutils-2.46.0) from tar commands or h1 title."""
+    page = html_path.read_text(encoding="utf-8", errors="replace")
+
     for cmd in extract_commands(html_path):
         m = re.search(r"tar\s+[^\n]*\s+([^\s/]+\.tar\.[a-z]{2,3})", cmd)
         if m:
             inner = re.match(r"([^-]+-[\d.]+)", m.group(1))
             if inner:
                 return inner.group(1)
+
+    # e.g. "The Linux API Headers (in linux-6.18.10.tar.xz)"
+    m = re.search(
+        r"(?:in\s+|\()(linux-\d[\w.]*)\.tar\.",
+        page,
+        re.I,
+    )
+    if m:
+        return m.group(1).lower()
+
     title = _page_title(html_path)
     if not title:
         return None
     title = title.replace("::", "-")
+    # "Linux-6.18.10 API Headers" and similar titles without " - Pass N"
+    linux_m = re.search(r"(linux-\d[\w.]*)", title, re.I)
+    if linux_m:
+        return linux_m.group(1).lower()
     # "Binutils-2.46.0 - Pass 1" / "Libstdc++ from GCC-15.2.0"
     pkg_m = re.search(
-        r"([A-Za-z][A-Za-z0-9+.:_-]*-\d[\w.]*)(?:\s+-\s+|\s+from\s+|$)",
+        r"([A-Za-z][A-Za-z0-9+.:_-]*-\d[\w.]*)(?:\s+-\s+|\s+from\s+|\s+\S|\s*$)",
         title,
         re.I,
     )

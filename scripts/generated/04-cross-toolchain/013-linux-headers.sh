@@ -9,6 +9,18 @@ LFS_STEP_ID="04-cross-toolchain/linux-headers"
 log_begin
 trap 'log_fail $?' ERR
 
+# Package: linux-headers
+log "enter sources directory"
+cd "${LFS_SOURCES:?}"
+log "extract source tarball (if needed)"
+TARBALL=$(ls -1 linux-6.18.10*.tar.* 2>/dev/null | head -1)
+if [ -n "$TARBALL" ] && [ ! -d "linux-6.18.10" ]; then
+  log "Extracting $TARBALL"
+  tar -xf "$TARBALL"
+fi
+cd "linux-6.18.10"
+log "Building in $(pwd)"
+
 log_step 1 2 'make'
 make mrproper
 
