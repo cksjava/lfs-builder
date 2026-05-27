@@ -59,6 +59,16 @@ ver_check Texinfo texi2any 5.0 || fail
 ver_check Xz xz 5.0.0 || fail
 ver_kernel 5.4 || fail
 
+# Extra tools required by Glibc and other packages during the build
+for tool in makeinfo msgfmt; do
+  if type -p "$tool" &>/dev/null; then
+    printf "OK:    %-9s found\n" "$tool"
+  else
+    printf "ERROR: Cannot find %s (install texinfo/gettext)\n" "$tool"
+    fail
+  fi
+done
+
 if mount | grep -q 'devpts on /dev/pts' && [ -e /dev/ptmx ]; then
   echo "OK:    Linux Kernel supports UNIX 98 PTY"
 else

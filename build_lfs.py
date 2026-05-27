@@ -198,15 +198,27 @@ Examples:
         orch = LFSOrchestrator(book, work_dir, cfg, force_format=force_format)
         if args.from_step is None:
             orch.reset_state()
-
-    if start_step in (None, 0) and not args.resume:
-        if cfg.prepare_host and not args.skip_host_prepare:
+        if start_step == 0 and cfg.prepare_host and not args.skip_host_prepare:
             rc = run_host_prepare(scripts_dir, skip=False)
             if rc != 0:
                 return rc
-        rc = run_host_check(scripts_dir)
+
+    if start_step is None:
+            start_step = orch._state.get("step_index", 0)
+
+    rc = run_host_check(scripts_dir)
+    if rc != 0 and cfg.prepare_host and not args.skip_host_prepare:
+        print("Host check failed; installing missing build dependencies...")
+        rc = run_host_prepare(scripts_dir, skip=False)
         if rc != 0:
             return rc
+        rc = run_host_check(scripts_dir)
+    if rc != 0:
+        print(
+            "Host does not meet LFS requirements. Run: ./build_lfs.py --prepare-host",
+            file=sys.stderr,
+        )
+        return rc
 
     from_step = start_step
 
