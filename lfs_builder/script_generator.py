@@ -29,6 +29,8 @@ def _filter_commands(step: BuildStep, commands: list[str]) -> list[str]:
                 continue
             if "bash.bashrc" in cmd:
                 continue  # book: run as root, handled by orchestrator
+            if cmd.strip() == "source ~/.bash_profile":
+                continue  # exec's interactive bash; orchestrator sets build env
             if "LFS=/mnt/lfs" in cmd:
                 cmd = cmd.replace("LFS=/mnt/lfs", 'LFS="$LFS"')
         if step.id == "add-user" and cmd.strip() == "su - lfs":

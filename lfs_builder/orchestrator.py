@@ -90,6 +90,22 @@ class LFSOrchestrator:
             env["LFS_ROOT_PASSWORD"] = self.cfg.root_password
         return env
 
+    def _lfs_user_env(self, base: dict[str, str], *, builder_scripts: str) -> dict[str, str]:
+        """Environment from the book's ~/.bashrc, applied per automated lfs step."""
+        lfs = base["LFS"]
+        path_parts = [f"{lfs}/tools/bin", "/usr/bin"]
+        if not os.path.islink("/bin"):
+            path_parts.append("/bin")
+        return {
+            **os.environ,
+            **base,
+            "HOME": f"/home/{self.cfg.build_user}",
+            "LFS_BUILDER_SCRIPTS": builder_scripts,
+            "LC_ALL": "POSIX",
+            "PATH": ":".join(path_parts),
+            "CONFIG_SITE": f"{lfs}/usr/share/config.site",
+        }
+
     def _script_path(self, entry: dict) -> Path:
         rel = entry["script"]
         return self.scripts_dir / rel
@@ -168,12 +184,7 @@ class LFSOrchestrator:
             if step_id == "environment":
                 self._disable_host_bash_bashrc()
             run_script, builder_scripts = self._stage_script_for_lfs_user(script)
-            lfs_env = {
-                **os.environ,
-                **env,
-                "HOME": f"/home/{self.cfg.build_user}",
-                "LFS_BUILDER_SCRIPTS": str(builder_scripts),
-            }
+            lfs_env = self._lfs_user_env(env, builder_scripts=str(builder_scripts))
             rc = drop_to_user(
                 self.cfg.build_user,
                 ["bash", "-e", str(run_script)],

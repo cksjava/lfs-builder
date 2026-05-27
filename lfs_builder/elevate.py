@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import shlex
 import subprocess
 import sys
 
@@ -23,9 +24,14 @@ def ensure_root() -> None:
 
 
 def drop_to_user(username: str, command: list[str], env: dict[str, str] | None = None) -> int:
-    runuser = shutil.which("runuser") or shutil.which("su")
-    if runuser and os.path.basename(runuser) == "runuser":
+    runuser = shutil.which("runuser")
+    if runuser:
         cmd = ["runuser", "-u", username, "--", *command]
     else:
-        cmd = ["su", "-", username, "-c", " ".join(command)]
+        su = shutil.which("su")
+        if not su:
+            print("Neither runuser nor su found.", file=sys.stderr)
+            return 127
+        # Non-login su: login shells would source ~/.bash_profile (exec bash).
+        cmd = [su, username, "-c", shlex.join(command)]
     return subprocess.call(cmd, env=env or os.environ.copy())
