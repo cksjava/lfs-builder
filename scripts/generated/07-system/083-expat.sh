@@ -31,12 +31,14 @@ log "Building in $(pwd)"
 
 require_var LFS
 log "entering chroot at ${LFS}"
-chroot "${LFS}" /usr/bin/env -i \
-    HOME=/root TERM="${TERM:-linux}" PS1="(lfs chroot) \u:\w\$ " \
-    PATH=/usr/bin:/usr/sbin \
-    MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}" \
-    TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}" \
-    /bin/bash -euo pipefail <<'CHROOT_EOF'
+chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
+export HOME=/root
+export TERM="${TERM:-linux}"
+export PS1="(lfs chroot) \u:\w\$ "
+export PATH=/usr/bin:/usr/sbin
+export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
+export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
+
 log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
 
 log_step 1 5 'configure'
