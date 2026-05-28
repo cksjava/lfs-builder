@@ -131,8 +131,68 @@ class LFSOrchestrator:
     def _chroot_stage_dir(self) -> Path:
         return self._lfs_stage_dir() / "chroot-runner"
 
+    def _chroot_gcc_env(self) -> list[str]:
+        """Minimal env for gcc inside chroot (matches chapter 7)."""
+        return [
+            "env",
+            "-i",
+            "HOME=/root",
+            "PATH=/usr/bin:/usr/sbin",
+            "LC_ALL=C",
+            "LANG=C",
+        ]
+
     def _fix_gcc_specs(self) -> None:
-        """Remove $LFS path prefixes from gcc specs (needed for chapter 7 chroot)."""
+        """Rewrite gcc specs so paths work inside chroot (no host $LFS prefix)."""
+        lfs = self.cfg.lfs_mount
+        prefix = self.cfg.lfs_mount
+        chroot_cmd = ["chroot", lfs, *self._chroot_gcc_env()]
+
+        spec_result = subprocess.run(
+            [*chroot_cmd, "gcc", "-print-file-name=specs"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if spec_result.returncode != 0:
+            self._log(
+                "[chroot-runner] warning: gcc -print-file-name=specs failed; "
+                f"trying file scan: {spec_result.stderr.strip()}"
+            )
+            self._fix_gcc_specs_by_scan(prefix)
+            return
+
+        spec_rel = spec_result.stdout.strip()
+        if not spec_rel or spec_rel == "specs":
+            self._log("[chroot-runner] warning: unexpected specs path; scanning")
+            self._fix_gcc_specs_by_scan(prefix)
+            return
+
+        spec_path = Path(lfs) / spec_rel.lstrip("/")
+        dumpspecs = subprocess.run(
+            [*chroot_cmd, "gcc", "-dumpspecs"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if dumpspecs.returncode != 0:
+            self._log(
+                "[chroot-runner] warning: gcc -dumpspecs failed; "
+                f"scanning specs files: {dumpspecs.stderr.strip()}"
+            )
+            self._fix_gcc_specs_by_scan(prefix)
+            return
+
+        updated = dumpspecs.stdout.replace(prefix, "")
+        spec_path.parent.mkdir(parents=True, exist_ok=True)
+        spec_path.write_text(updated, encoding="utf-8")
+        self._log(
+            f"[chroot-runner] rewrote gcc specs at "
+            f"{spec_path.relative_to(lfs)} (removed {prefix} prefixes)"
+        )
+
+    def _fix_gcc_specs_by_scan(self, prefix: str) -> None:
+        """Fallback: strip the mount prefix from every gcc specs file found."""
         lfs = Path(self.cfg.lfs_mount)
         specs_files = [p for p in lfs.glob("usr/lib/gcc/**/specs") if p.is_file()]
         if not specs_files:
@@ -140,7 +200,6 @@ class LFSOrchestrator:
                 f"[chroot-runner] warning: no gcc specs under {lfs}/usr/lib/gcc"
             )
             return
-        prefix = self.cfg.lfs_mount
         for spec in specs_files:
             text = spec.read_text(encoding="utf-8", errors="replace")
             if prefix not in text:
@@ -261,11 +320,17 @@ class LFSOrchestrator:
                     'export LC_ALL=C',
                     'export LANG=C',
                     "",
+                    '# gcc pass 2 specs may still name the host mount (e.g. /mnt/lfs/...).',
+                    'mkdir -p /mnt',
+                    'if [ ! -e /mnt/lfs ]; then',
+                    '  ln -sf / /mnt/lfs',
+                    "fi",
+                    "",
                     '_verify_chroot_toolchain() {',
                     '  local cc1',
                     '  cc1=$(gcc -print-prog-name=cc1) || true',
-                    '  if [ -z "$cc1" ] || [ ! -x "$cc1" ]; then',
-                    '    die "gcc cannot run cc1 (got: ${cc1:-<empty>}). Chapter 6 gcc-pass2 specs may still reference the host $LFS mount path; pull latest lfs-builder and resume."',
+                    '  if [ -z "$cc1" ] || [[ "$cc1" != /* ]] || [ ! -x "$cc1" ]; then',
+                    '    die "gcc cannot run cc1 (got: ${cc1:-<empty>}). Re-run after git pull; specs and /mnt/lfs symlink are fixed automatically."',
                     "  fi",
                     '  echo "int main(void){return 0;}" > /tmp/.lfs-cc-test.c',
                     '  gcc /tmp/.lfs-cc-test.c -o /tmp/.lfs-cc-test || die "gcc test compile failed inside chroot"',
