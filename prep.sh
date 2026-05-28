@@ -53,12 +53,12 @@ if command -v apt-get >/dev/null; then
 elif command -v dnf >/dev/null; then
   echo "==> Installing host packages via dnf"
   dnf install -y gcc gcc-c++ make patch bison flex gawk gettext texinfo \
-    wget xz perl python3 m4 gperf diffutils findutils binutils coreutils \
+    wget axel xz perl python3 m4 gperf diffutils findutils binutils coreutils \
     grep gzip sed tar findutils which sudo
 elif command -v yum >/dev/null; then
   echo "==> Installing host packages via yum"
   yum install -y gcc gcc-c++ make patch bison flex gawk gettext texinfo \
-    wget xz perl python3 m4 gperf diffutils findutils binutils coreutils \
+    wget axel xz perl python3 m4 gperf diffutils findutils binutils coreutils \
     grep gzip sed tar findutils which sudo
 else
   echo "prep.sh: no apt-get/dnf/yum found — install chapter 2.2 tools manually" >&2

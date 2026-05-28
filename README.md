@@ -5,7 +5,7 @@ Unattended build orchestrator for [Linux From Scratch](https://www.linuxfromscra
 ## Features
 
 - Interactive wizard for partition, mount point, timezone, keymap, locale, hostname, GRUB disk, and parallel jobs
-- Downloads all sources and patches in one shot via `lfs-packages-VERSION.tar` from LFS file mirrors (book version → tarball name); falls back to `wget-list-systemd` if mirrors fail
+- Downloads all sources and patches in one shot via `lfs-packages-VERSION.tar` using **axel** (100 connections by default) from LFS file mirrors
 - Executes book installation commands in chapter order (cross toolchain → temp tools → chroot → system → config → kernel/GRUB)
 - Handles chroot enter/exit, virtual kernel filesystem mounts, and `lfs` user builds
 - **Quiet** (default) or **verbose** (`-v`) logging
@@ -18,7 +18,7 @@ Unattended build orchestrator for [Linux From Scratch](https://www.linuxfromscra
 ## Requirements
 
 - Host meets LFS 13.0 [host requirements](https://www.linuxfromscratch.org/lfs/view/stable/chapter02/hostreqs.html)
-- `python3`, `bash`, `wget`, `sudo`, root access (installed by `prep.sh` on Debian/Ubuntu)
+- `python3`, `bash`, `wget`, `axel`, `sudo`, root access (installed by `prep.sh` on Debian/Ubuntu)
 - Extracted book: `../13.0/` — run `./download-book.sh` after clone (sources come from bundled `data/`, not the book tree)
 - Empty partition(s) for LFS (and optional `/boot`, swap)
 
@@ -47,7 +47,7 @@ sudo ./prep.sh                   # apt install; runs ./version-check.sh at the e
 ./version-check.sh               # optional: run again as a normal user
 ```
 
-During the build, sources are installed into `$LFS/sources` from `lfs-packages-13.0.tar` (version taken from the book path). To force per-URL downloads instead: `LFS_USE_WGET_LIST=1 ./build_lfs.py`.
+During the build, sources are installed into `$LFS/sources` from `lfs-packages-13.0.tar` (version taken from the book path), downloaded with `axel -n 100`. Override connections with `LFS_AXEL_CONNECTIONS`. Per-URL fallback: `LFS_ALLOW_WGET_FALLBACK=1`; force wget-only: `LFS_USE_WGET_LIST=1`.
 
 Equivalent via the orchestrator:
 

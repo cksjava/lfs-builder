@@ -33,6 +33,7 @@ bc
 file
 
 # Orchestrator and downloads
+axel
 sudo
 rsync
 ca-certificates

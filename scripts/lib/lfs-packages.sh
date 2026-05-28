@@ -75,16 +75,28 @@ lfs_packages_download() {
 _lfs_packages_fetch() {
   local url="$1"
   local out="$2"
-  if command -v wget >/dev/null; then
-    wget --continue --timestamping -O "${out}" "${url}"
-    return $?
+  local connections="${LFS_AXEL_CONNECTIONS:-100}"
+  local rc=0
+
+  if ! command -v axel >/dev/null; then
+    echo "axel is required for lfs-packages download (install with: sudo ./prep.sh)" >&2
+    return 1
   fi
-  if command -v curl >/dev/null; then
-    curl -fL --retry 3 -C - -o "${out}" "${url}"
-    return $?
+
+  echo "Downloading with axel (-n ${connections}): ${url}"
+  axel -n "${connections}" -o "${out}" "${url}" || rc=$?
+  if [[ "$rc" -ne 0 ]]; then
+    rm -f "${out}" "${out}.st" 2>/dev/null || true
+    return "$rc"
   fi
-  echo "Need wget or curl to download packages" >&2
-  return 1
+  # Reject tiny/HTML error pages saved as the tarball
+  if [[ ! -s "${out}" ]] || [[ "$(stat -c%s "${out}" 2>/dev/null || echo 0)" -lt 1000000 ]]; then
+    echo "Download too small or empty (not a valid lfs-packages tarball): ${url}" >&2
+    rm -f "${out}" "${out}.st" 2>/dev/null || true
+    return 1
+  fi
+  rm -f "${out}.st" 2>/dev/null || true
+  return 0
 }
 
 lfs_packages_extract() {
