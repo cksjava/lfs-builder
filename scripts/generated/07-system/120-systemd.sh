@@ -61,9 +61,13 @@ meson setup ..                \
 log_step 4 9 'ninja'
 ninja
 
-log_step 5 9 'echo '"'"'NAME="Linux From Scratch"'"'"' > /etc/os-release'
-echo 'NAME="Linux From Scratch"' > /etc/os-release
-unshare -m ninja test
+log_step 5 9 'if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then'
+if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then
+  echo 'NAME="Linux From Scratch"' > /etc/os-release
+  unshare -m ninja test
+else
+  log "skipping test suite (LFS_RUN_TESTS=0)"
+fi
 
 log_step 6 9 'ninja install'
 ninja install

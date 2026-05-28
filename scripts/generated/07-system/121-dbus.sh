@@ -39,8 +39,12 @@ meson setup --prefix=/usr --buildtype=release --wrap-mode=nofallback ..
 log_step 3 6 'ninja'
 ninja
 
-log_step 4 6 'ninja test'
-ninja test
+log_step 4 6 'if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then'
+if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then
+  ninja test
+else
+  log "skipping test suite (LFS_RUN_TESTS=0)"
+fi
 
 log_step 5 6 'ninja install'
 ninja install

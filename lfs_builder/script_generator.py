@@ -145,9 +145,16 @@ def _idempotentize_command_block(cmd: str) -> str:
 
 
 def _wrap_test_command_block(cmd: str) -> str:
-    """Skip make check blocks unless LFS_RUN_TESTS=1."""
+    """Skip known test-suite blocks unless LFS_RUN_TESTS=1."""
     lower = cmd.lower()
-    if "make check" not in lower and "make -k check" not in lower:
+    test_patterns = (
+        r"\bmake(\s+-k)?\s+check\b",
+        r"\bmake\s+test\b",
+        r"\bninja\s+test\b",
+        r"\bmeson\s+test\b",
+        r"\bctest\b",
+    )
+    if not any(re.search(p, lower) for p in test_patterns):
         return cmd
     body = "\n".join(f"  {line}" for line in cmd.split("\n"))
     return (

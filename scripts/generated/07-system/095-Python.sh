@@ -39,8 +39,12 @@ log_step 1 7 'configure'
 log_step 2 7 'make'
 make
 
-log_step 3 7 'make'
-make test TESTOPTS="--timeout 120"
+log_step 3 7 'if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then'
+if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then
+  make test TESTOPTS="--timeout 120"
+else
+  log "skipping test suite (LFS_RUN_TESTS=0)"
+fi
 
 log_step 4 7 'make install'
 make install

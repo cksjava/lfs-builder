@@ -60,8 +60,12 @@ sed -e "s|$SRCDIR/unix/pkgs/itcl4.3.4|/usr/lib/itcl4.3.4|" \
 log_step 6 13 'unset SRCDIR'
 unset SRCDIR
 
-log_step 7 13 'LC_ALL=C.UTF-8 make test'
-LC_ALL=C.UTF-8 make test
+log_step 7 13 'if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then'
+if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then
+  LC_ALL=C.UTF-8 make test
+else
+  log "skipping test suite (LFS_RUN_TESTS=0)"
+fi
 
 log_step 8 13 'make install'
 make install 

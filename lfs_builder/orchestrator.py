@@ -254,6 +254,8 @@ class LFSOrchestrator:
             **env,
             "LFS_BUILDER_SCRIPTS": "/sources/.lfs-builder-run/chroot-runner",
             "LFS_SOURCES": "/sources",
+            "LC_ALL": "C",
+            "LANG": "C",
         }
         cmd = [
             "chroot",

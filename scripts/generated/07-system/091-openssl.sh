@@ -39,8 +39,12 @@ log_step 1 6 './config --prefix=/usr         \'
 log_step 2 6 'make'
 make
 
-log_step 3 6 'HARNESS_JOBS=$(nproc) make test'
-HARNESS_JOBS=$(nproc) make test
+log_step 3 6 'if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then'
+if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then
+  HARNESS_JOBS=$(nproc) make test
+else
+  log "skipping test suite (LFS_RUN_TESTS=0)"
+fi
 
 log_step 4 6 'sed -i '"'"'/INSTALL_LIBS/s/libcrypto.a libssl.a//'"'"' Makefile'
 sed -i '/INSTALL_LIBS/s/libcrypto.a libssl.a//' Makefile

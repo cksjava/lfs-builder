@@ -35,8 +35,12 @@ perl Makefile.PL
 log_step 2 4 'make'
 make
 
-log_step 3 4 'make'
-make test
+log_step 3 4 'if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then'
+if [[ "${LFS_RUN_TESTS:-0}" == "1" ]]; then
+  make test
+else
+  log "skipping test suite (LFS_RUN_TESTS=0)"
+fi
 
 log_step 4 4 'make install'
 make install
