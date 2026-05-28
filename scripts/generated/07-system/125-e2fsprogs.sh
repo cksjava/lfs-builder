@@ -31,8 +31,8 @@ chroot "${LFS}" /usr/bin/env -i \
     /bin/bash -euo pipefail <<'CHROOT_EOF'
 log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
 
-log_step 1 9 'mkdir -v build'
-mkdir -v build
+log_step 1 9 'mkdir -vp build'
+mkdir -vp build
 cd       build
 
 log_step 2 9 'configure'

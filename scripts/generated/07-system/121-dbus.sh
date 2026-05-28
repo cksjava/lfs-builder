@@ -31,8 +31,8 @@ chroot "${LFS}" /usr/bin/env -i \
     /bin/bash -euo pipefail <<'CHROOT_EOF'
 log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
 
-log_step 1 6 'mkdir build'
-mkdir build
+log_step 1 6 'mkdir p build'
+mkdir p build
 cd    build
 
 log_step 2 6 'meson setup --prefix=/usr --buildtype=release --wrap-mode=nofallback ..'

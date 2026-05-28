@@ -23,8 +23,8 @@ fi
 cd "binutils-2.46.0"
 log "Building in $(pwd)"
 
-log_step 1 4 'mkdir -v build'
-mkdir -v build
+log_step 1 4 'mkdir -vp build'
+mkdir -vp build
 cd       build
 
 log_step 2 4 'configure'

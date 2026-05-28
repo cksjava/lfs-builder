@@ -35,8 +35,8 @@ esac
 log_step 2 15 'apply patch'
 patch -Np1 -i ../glibc-fhs-1.patch
 
-log_step 3 15 'mkdir -v build'
-mkdir -v build
+log_step 3 15 'mkdir -vp build'
+mkdir -vp build
 cd       build
 
 log_step 4 15 'echo "rootsbindir=/usr/sbin" > configparms'

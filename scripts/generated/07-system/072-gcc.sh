@@ -42,8 +42,8 @@ case $(uname -m) in
   ;;
 esac
 
-log_step 3 22 'mkdir -v build'
-mkdir -v build
+log_step 3 22 'mkdir -vp build'
+mkdir -vp build
 cd       build
 
 log_step 4 22 'configure'

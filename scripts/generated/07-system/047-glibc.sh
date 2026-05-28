@@ -34,8 +34,8 @@ log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
 log_step 1 32 'apply patch'
 patch -Np1 -i ../glibc-fhs-1.patch
 
-log_step 2 32 'mkdir -v build'
-mkdir -v build
+log_step 2 32 'mkdir -vp build'
+mkdir -vp build
 cd       build
 
 log_step 3 32 'echo "rootsbindir=/usr/sbin" > configparms'

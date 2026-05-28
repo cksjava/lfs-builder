@@ -43,8 +43,8 @@ log_step 3 8 'sed '"'"'/thread_header =/s/@.*@/gthr-posix.h/'"'"' \'
 sed '/thread_header =/s/@.*@/gthr-posix.h/' \
     -i libgcc/Makefile.in libstdc++-v3/include/Makefile.in
 
-log_step 4 8 'mkdir -v build'
-mkdir -v build
+log_step 4 8 'mkdir -vp build'
+mkdir -vp build
 cd       build
 
 log_step 5 8 'configure'

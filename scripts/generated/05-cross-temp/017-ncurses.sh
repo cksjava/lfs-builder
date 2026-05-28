@@ -24,7 +24,7 @@ cd "ncurses-6.6"
 log "Building in $(pwd)"
 
 log_step 1 4 'configure'
-mkdir build
+mkdir p build
 pushd build
   ../configure --prefix=$LFS/tools AWK=gawk
   make -C include

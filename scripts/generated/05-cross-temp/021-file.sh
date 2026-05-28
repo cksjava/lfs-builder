@@ -24,7 +24,7 @@ cd "file-5.46"
 log "Building in $(pwd)"
 
 log_step 1 5 'configure'
-mkdir build
+mkdir p build
 pushd build
   ../configure --disable-bzlib      \
                --disable-libseccomp \

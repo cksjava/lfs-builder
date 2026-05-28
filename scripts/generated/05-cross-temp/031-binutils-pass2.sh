@@ -26,8 +26,8 @@ log "Building in $(pwd)"
 log_step 1 6 'sed '"'"'6031s/$add_dir//'"'"' -i ltmain.sh'
 sed '6031s/$add_dir//' -i ltmain.sh
 
-log_step 2 6 'mkdir -v build'
-mkdir -v build
+log_step 2 6 'mkdir -vp build'
+mkdir -vp build
 cd       build
 
 log_step 3 6 'configure'

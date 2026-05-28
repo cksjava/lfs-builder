@@ -37,8 +37,8 @@ if [[ "${LFS_USE_WGET_LIST:-0}" == "1" ]]; then
 else
   log_step 1 3 "download lfs-packages-${VERSION}.tar to ${DEST}"
   if ! lfs_packages_download "${DEST}" "${VERSION}"; then
-    log "Tarball download failed; falling back to wget-list"
-    if [[ -f "${LIST}" ]]; then
+    if [[ "${LFS_ALLOW_WGET_FALLBACK:-0}" == "1" && -f "${LIST}" ]]; then
+      log "Tarball download failed; LFS_ALLOW_WGET_FALLBACK=1 — using wget-list"
       cd "${DEST}"
       wget \
         --input-file="${LIST}" \
@@ -49,7 +49,7 @@ else
         --waitretry=5 \
         --retry-connrefused || die "wget-list download failed"
     else
-      die "Could not download lfs-packages-${VERSION}.tar and no wget-list at ${LIST}"
+      die "Could not download lfs-packages-${VERSION}.tar (run ./download-packages.sh or set LFS_ALLOW_WGET_FALLBACK=1)"
     fi
   else
     log_step 2 3 "extract ${TARBALL_NAME}"

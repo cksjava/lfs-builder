@@ -123,6 +123,13 @@ def _idempotentize_line(line: str) -> str:
     if re.match(r"^ln\s+-s[^f]", s) and s.startswith("ln -s") and not s.startswith("ln -sf"):
         return re.sub(r"^ln\s+-s", "ln -sf", s, count=1)
 
+    # mkdir build (and similar) must survive --resume after a partial build
+    m = re.match(r"^mkdir\s+(-[a-zA-Z]+)?\s*(.+)$", s)
+    if m and "-p" not in (m.group(1) or ""):
+        flags = (m.group(1) or "").replace("p", "") + "p"
+        target = m.group(2)
+        return f"mkdir {flags} {target}"
+
     return line
 
 

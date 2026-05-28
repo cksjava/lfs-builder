@@ -23,8 +23,8 @@ fi
 cd "gcc-15.2.0"
 log "Building in $(pwd)"
 
-log_step 1 5 'mkdir -v build'
-mkdir -v build
+log_step 1 5 'mkdir -vp build'
+mkdir -vp build
 cd       build
 
 log_step 2 5 '../libstdc++-v3/configure      \'
