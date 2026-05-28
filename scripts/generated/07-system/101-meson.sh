@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: meson
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "meson-1.10.1" ]; then
+  log "Removing prior meson-1.10.1 tree"
+  rm -rf "meson-1.10.1"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 meson-1.10.1*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "meson-1.10.1" ]; then
+  die "Source tarball not found matching meson-1.10.1"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "meson-1.10.1" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "meson-1.10.1" ] || die "Missing source directory meson-1.10.1"
 cd "meson-1.10.1"
 log "Building in $(pwd)"
 
@@ -41,6 +49,10 @@ install -vDm644 data/shell-completions/zsh/_meson /usr/share/zsh/site-functions/
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree meson-1.10.1"
+rm -rf "meson-1.10.1"
+
 trap - ERR
 log_done
 

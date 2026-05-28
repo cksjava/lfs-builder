@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: readline
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "readline-8.3" ]; then
+  log "Removing prior readline-8.3 tree"
+  rm -rf "readline-8.3"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 readline-8.3*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "readline-8.3" ]; then
+  die "Source tarball not found matching readline-8.3"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "readline-8.3" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "readline-8.3" ] || die "Missing source directory readline-8.3"
 cd "readline-8.3"
 log "Building in $(pwd)"
 
@@ -62,6 +70,10 @@ install -v -m644 doc/*.{ps,pdf,html,dvi} /usr/share/doc/readline-8.3
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree readline-8.3"
+rm -rf "readline-8.3"
+
 trap - ERR
 log_done
 

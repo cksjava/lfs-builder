@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: acl
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "acl-2.3.2" ]; then
+  log "Removing prior acl-2.3.2 tree"
+  rm -rf "acl-2.3.2"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 acl-2.3.2*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "acl-2.3.2" ]; then
+  die "Source tarball not found matching acl-2.3.2"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "acl-2.3.2" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "acl-2.3.2" ] || die "Missing source directory acl-2.3.2"
 cd "acl-2.3.2"
 log "Building in $(pwd)"
 
@@ -51,6 +59,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree acl-2.3.2"
+rm -rf "acl-2.3.2"
+
 trap - ERR
 log_done
 

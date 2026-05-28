@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: grep
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "grep-3.12" ]; then
+  log "Removing prior grep-3.12 tree"
+  rm -rf "grep-3.12"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 grep-3.12*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "grep-3.12" ]; then
+  die "Source tarball not found matching grep-3.12"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "grep-3.12" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "grep-3.12" ] || die "Missing source directory grep-3.12"
 cd "grep-3.12"
 log "Building in $(pwd)"
 
@@ -52,6 +60,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree grep-3.12"
+rm -rf "grep-3.12"
+
 trap - ERR
 log_done
 

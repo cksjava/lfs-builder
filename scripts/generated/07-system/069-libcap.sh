@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: libcap
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "libcap-2.77" ]; then
+  log "Removing prior libcap-2.77 tree"
+  rm -rf "libcap-2.77"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 libcap-2.77*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "libcap-2.77" ]; then
+  die "Source tarball not found matching libcap-2.77"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "libcap-2.77" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "libcap-2.77" ] || die "Missing source directory libcap-2.77"
 cd "libcap-2.77"
 log "Building in $(pwd)"
 
@@ -45,6 +53,10 @@ make prefix=/usr lib=lib install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree libcap-2.77"
+rm -rf "libcap-2.77"
+
 trap - ERR
 log_done
 

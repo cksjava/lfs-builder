@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: sqlite
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "sqlite-autoconf-3510200" ]; then
+  log "Removing prior sqlite-autoconf-3510200 tree"
+  rm -rf "sqlite-autoconf-3510200"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 sqlite-autoconf-3510200*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "sqlite-autoconf-3510200" ]; then
+  die "Source tarball not found matching sqlite-autoconf-3510200"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "sqlite-autoconf-3510200" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "sqlite-autoconf-3510200" ] || die "Missing source directory sqlite-autoconf-3510200"
 cd "sqlite-autoconf-3510200"
 log "Building in $(pwd)"
 
@@ -55,6 +63,10 @@ cp -v -R sqlite-doc-3510200/* /usr/share/doc/sqlite-3.51.2
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree sqlite-autoconf-3510200"
+rm -rf "sqlite-autoconf-3510200"
+
 trap - ERR
 log_done
 

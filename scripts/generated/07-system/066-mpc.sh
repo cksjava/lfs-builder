@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: mpc
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "mpc-1.3.1" ]; then
+  log "Removing prior mpc-1.3.1 tree"
+  rm -rf "mpc-1.3.1"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 mpc-1.3.1*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "mpc-1.3.1" ]; then
+  die "Source tarball not found matching mpc-1.3.1"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "mpc-1.3.1" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "mpc-1.3.1" ] || die "Missing source directory mpc-1.3.1"
 cd "mpc-1.3.1"
 log "Building in $(pwd)"
 
@@ -53,6 +61,10 @@ make install-html
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree mpc-1.3.1"
+rm -rf "mpc-1.3.1"
+
 trap - ERR
 log_done
 

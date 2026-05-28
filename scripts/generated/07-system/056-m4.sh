@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: m4
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "m4-1.4.21" ]; then
+  log "Removing prior m4-1.4.21 tree"
+  rm -rf "m4-1.4.21"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 m4-1.4.21*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "m4-1.4.21" ]; then
+  die "Source tarball not found matching m4-1.4.21"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "m4-1.4.21" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "m4-1.4.21" ] || die "Missing source directory m4-1.4.21"
 cd "m4-1.4.21"
 log "Building in $(pwd)"
 
@@ -49,6 +57,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree m4-1.4.21"
+rm -rf "m4-1.4.21"
+
 trap - ERR
 log_done
 

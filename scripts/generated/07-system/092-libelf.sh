@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: libelf
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "elfutils-0.194" ]; then
+  log "Removing prior elfutils-0.194 tree"
+  rm -rf "elfutils-0.194"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 elfutils-0.194*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "elfutils-0.194" ]; then
+  die "Source tarball not found matching elfutils-0.194"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "elfutils-0.194" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "elfutils-0.194" ] || die "Missing source directory elfutils-0.194"
 cd "elfutils-0.194"
 log "Building in $(pwd)"
 
@@ -47,6 +55,10 @@ rm /usr/lib/libelf.a
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree elfutils-0.194"
+rm -rf "elfutils-0.194"
+
 trap - ERR
 log_done
 

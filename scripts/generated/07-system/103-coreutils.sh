@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: coreutils
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "coreutils-9.10" ]; then
+  log "Removing prior coreutils-9.10 tree"
+  rm -rf "coreutils-9.10"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 coreutils-9.10*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "coreutils-9.10" ]; then
+  die "Source tarball not found matching coreutils-9.10"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "coreutils-9.10" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "coreutils-9.10" ] || die "Missing source directory coreutils-9.10"
 cd "coreutils-9.10"
 log "Building in $(pwd)"
 
@@ -69,6 +77,10 @@ sed -i 's/"1"/"8"/' /usr/share/man/man8/chroot.8
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree coreutils-9.10"
+rm -rf "coreutils-9.10"
+
 trap - ERR
 log_done
 

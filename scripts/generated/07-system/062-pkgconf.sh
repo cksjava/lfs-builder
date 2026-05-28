@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: pkgconf
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "pkgconf-2.5.1" ]; then
+  log "Removing prior pkgconf-2.5.1 tree"
+  rm -rf "pkgconf-2.5.1"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 pkgconf-2.5.1*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "pkgconf-2.5.1" ]; then
+  die "Source tarball not found matching pkgconf-2.5.1"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "pkgconf-2.5.1" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "pkgconf-2.5.1" ] || die "Missing source directory pkgconf-2.5.1"
 cd "pkgconf-2.5.1"
 log "Building in $(pwd)"
 
@@ -48,6 +56,10 @@ ln -svf pkgconf.1 /usr/share/man/man1/pkg-config.1
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree pkgconf-2.5.1"
+rm -rf "pkgconf-2.5.1"
+
 trap - ERR
 log_done
 

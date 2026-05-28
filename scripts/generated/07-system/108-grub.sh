@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: grub
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "grub-2.14" ]; then
+  log "Removing prior grub-2.14 tree"
+  rm -rf "grub-2.14"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 grub-2.14*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "grub-2.14" ]; then
+  die "Source tarball not found matching grub-2.14"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "grub-2.14" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "grub-2.14" ] || die "Missing source directory grub-2.14"
 cd "grub-2.14"
 log "Building in $(pwd)"
 
@@ -51,6 +59,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree grub-2.14"
+rm -rf "grub-2.14"
+
 trap - ERR
 log_done
 

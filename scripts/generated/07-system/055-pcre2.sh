@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: pcre2
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "pcre2-10.47" ]; then
+  log "Removing prior pcre2-10.47 tree"
+  rm -rf "pcre2-10.47"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 pcre2-10.47*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "pcre2-10.47" ]; then
+  die "Source tarball not found matching pcre2-10.47"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "pcre2-10.47" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "pcre2-10.47" ] || die "Missing source directory pcre2-10.47"
 cd "pcre2-10.47"
 log "Building in $(pwd)"
 
@@ -58,6 +66,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree pcre2-10.47"
+rm -rf "pcre2-10.47"
+
 trap - ERR
 log_done
 

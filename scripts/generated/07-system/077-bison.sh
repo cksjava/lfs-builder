@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: bison
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "bison-3.8.2" ]; then
+  log "Removing prior bison-3.8.2 tree"
+  rm -rf "bison-3.8.2"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 bison-3.8.2*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "bison-3.8.2" ]; then
+  die "Source tarball not found matching bison-3.8.2"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "bison-3.8.2" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "bison-3.8.2" ] || die "Missing source directory bison-3.8.2"
 cd "bison-3.8.2"
 log "Building in $(pwd)"
 
@@ -49,6 +57,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree bison-3.8.2"
+rm -rf "bison-3.8.2"
+
 trap - ERR
 log_done
 

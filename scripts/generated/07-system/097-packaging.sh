@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: packaging
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "packaging-26.0" ]; then
+  log "Removing prior packaging-26.0 tree"
+  rm -rf "packaging-26.0"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 packaging-26.0*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "packaging-26.0" ]; then
+  die "Source tarball not found matching packaging-26.0"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "packaging-26.0" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "packaging-26.0" ] || die "Missing source directory packaging-26.0"
 cd "packaging-26.0"
 log "Building in $(pwd)"
 
@@ -39,6 +47,10 @@ pip3 install --no-index --find-links dist packaging
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree packaging-26.0"
+rm -rf "packaging-26.0"
+
 trap - ERR
 log_done
 

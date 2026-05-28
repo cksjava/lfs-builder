@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: expat
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "expat-2.7.4" ]; then
+  log "Removing prior expat-2.7.4 tree"
+  rm -rf "expat-2.7.4"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 expat-2.7.4*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "expat-2.7.4" ]; then
+  die "Source tarball not found matching expat-2.7.4"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "expat-2.7.4" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "expat-2.7.4" ] || die "Missing source directory expat-2.7.4"
 cd "expat-2.7.4"
 log "Building in $(pwd)"
 
@@ -54,6 +62,10 @@ install -v -m644 doc/*.{html,css} /usr/share/doc/expat-2.7.4
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree expat-2.7.4"
+rm -rf "expat-2.7.4"
+
 trap - ERR
 log_done
 

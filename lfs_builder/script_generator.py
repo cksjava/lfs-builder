@@ -9,7 +9,14 @@ from pathlib import Path
 
 from .book_parser import extract_commands, parse_sbu
 from .manifest import BuildStep, StepKind, build_manifest
-from .package_sources import PackageSource, load_package_sources, source_for_step
+from .package_sources import (
+    PACKAGE_OVERRIDES,
+    SKIP_SOURCE_CLEANUP_AFTER,
+    SKIP_SOURCE_REMOVE_BEFORE,
+    PackageSource,
+    load_package_sources,
+    source_for_step,
+)
 
 
 def _filter_commands(step: BuildStep, commands: list[str]) -> list[str]:
@@ -199,21 +206,69 @@ def _script_footer() -> list[str]:
     return ["trap - ERR", "log_done", ""]
 
 
-def _package_preamble(source: PackageSource, meta_name: str) -> list[str]:
+def _package_preamble(source: PackageSource, meta_name: str, step_id: str) -> list[str]:
     glob = source.tarball_glob
     build_dir = source.build_dir
-    return [
+    lines = [
         f"# Package: {meta_name}",
         'log "enter sources directory"',
         'cd "${LFS_SOURCES:?}"',
-        'log "extract source tarball (if needed)"',
-        f'TARBALL=$(ls -1 {glob}*.tar.* 2>/dev/null | head -1)',
-        f'if [ -n "$TARBALL" ] && [ ! -d "{build_dir}" ]; then',
-        '  log "Extracting $TARBALL"',
-        '  tar -xf "$TARBALL"',
-        "fi",
-        f'cd "{build_dir}"',
-        'log "Building in $(pwd)"',
+    ]
+    if step_id not in SKIP_SOURCE_REMOVE_BEFORE:
+        lines.extend(
+            [
+                f'if [ -d "{build_dir}" ]; then',
+                f'  log "Removing prior {build_dir} tree"',
+                f'  rm -rf "{build_dir}"',
+                "fi",
+            ]
+        )
+    lines.extend(
+        [
+            'log "extract source tarball (if needed)"',
+            f'TARBALL=$(ls -1 {glob}*.tar.* 2>/dev/null | head -1)',
+            f'if [ -z "$TARBALL" ] && [ ! -d "{build_dir}" ]; then',
+            f'  die "Source tarball not found matching {glob}"',
+            "fi",
+            f'if [ -n "$TARBALL" ] && [ ! -d "{build_dir}" ]; then',
+            '  log "Extracting $TARBALL"',
+            '  tar -xf "$TARBALL"',
+            "fi",
+            f'[ -d "{build_dir}" ] || die "Missing source directory {build_dir}"',
+            f'cd "{build_dir}"',
+            'log "Building in $(pwd)"',
+            "",
+        ]
+    )
+    return lines
+
+
+def _package_source_for_step(
+    step: BuildStep,
+    package_sources: dict[str, PackageSource | None],
+) -> PackageSource | None:
+    if step.kind == StepKind.PACKAGE:
+        return source_for_step(step, package_sources)
+    if step.id in PACKAGE_OVERRIDES:
+        entry = PACKAGE_OVERRIDES[step.id]
+        return PackageSource(
+            tarball_glob=entry["tarball_glob"],
+            build_dir=entry["build_dir"],
+        )
+    return None
+
+
+def _package_postamble(source: PackageSource, step_id: str) -> list[str]:
+    build_dir = source.build_dir
+    if step_id in SKIP_SOURCE_CLEANUP_AFTER:
+        return [
+            f'log "Keeping {build_dir} for a later build step"',
+            "",
+        ]
+    return [
+        'cd "${LFS_SOURCES:?}"',
+        f'log "Removing source tree {build_dir}"',
+        f'rm -rf "{build_dir}"',
         "",
     ]
 
@@ -298,12 +353,11 @@ def generate_step_script(
     body = list(commands)
     if step.id in ("filesystem", "mount"):
         body = []
-    if step.kind == StepKind.PACKAGE:
-        pkg_source = source_for_step(step, package_sources)
-        if pkg_source:
-            lines.extend(_package_preamble(pkg_source, book_meta.name))
-        elif not body:
-            body = ['echo "WARNING: no source directory mapped for this package"']
+    pkg_source = _package_source_for_step(step, package_sources)
+    if pkg_source:
+        lines.extend(_package_preamble(pkg_source, book_meta.name, step.id))
+    elif step.kind == StepKind.PACKAGE and not body:
+        body = ['echo "WARNING: no source directory mapped for this package"']
     if not body and step.kind == StepKind.PACKAGE:
         body = ['echo "WARNING: no commands extracted"']
 
@@ -313,6 +367,9 @@ def generate_step_script(
             lines.extend(_wrap_chroot(logged))
         else:
             lines.extend(logged)
+
+    if pkg_source is not None:
+        lines.extend(_package_postamble(pkg_source, step.id))
 
     if step.id not in ("filesystem", "mount"):
         lines.extend(_script_footer())

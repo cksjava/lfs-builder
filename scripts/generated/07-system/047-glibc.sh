@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: glibc
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "glibc-2.43" ]; then
+  log "Removing prior glibc-2.43 tree"
+  rm -rf "glibc-2.43"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 glibc-2.43*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "glibc-2.43" ]; then
+  die "Source tarball not found matching glibc-2.43"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "glibc-2.43" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "glibc-2.43" ] || die "Missing source directory glibc-2.43"
 cd "glibc-2.43"
 log "Building in $(pwd)"
 
@@ -199,6 +207,10 @@ mkdir -pv /etc/ld.so.conf.d
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree glibc-2.43"
+rm -rf "glibc-2.43"
+
 trap - ERR
 log_done
 

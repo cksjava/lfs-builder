@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: zlib
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "zlib-1.3.2" ]; then
+  log "Removing prior zlib-1.3.2 tree"
+  rm -rf "zlib-1.3.2"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 zlib-1.3.2*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "zlib-1.3.2" ]; then
+  die "Source tarball not found matching zlib-1.3.2"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "zlib-1.3.2" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "zlib-1.3.2" ] || die "Missing source directory zlib-1.3.2"
 cd "zlib-1.3.2"
 log "Building in $(pwd)"
 
@@ -52,6 +60,10 @@ rm -fv /usr/lib/libz.a
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree zlib-1.3.2"
+rm -rf "zlib-1.3.2"
+
 trap - ERR
 log_done
 

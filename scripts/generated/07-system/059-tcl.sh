@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: tcl
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "tcl8.6.17" ]; then
+  log "Removing prior tcl8.6.17 tree"
+  rm -rf "tcl8.6.17"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 tcl8.6.17-src*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "tcl8.6.17" ]; then
+  die "Source tarball not found matching tcl8.6.17-src"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "tcl8.6.17" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "tcl8.6.17" ] || die "Missing source directory tcl8.6.17"
 cd "tcl8.6.17"
 log "Building in $(pwd)"
 
@@ -89,6 +97,10 @@ cp -v -r  ./html/* /usr/share/doc/tcl-8.6.17
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree tcl8.6.17"
+rm -rf "tcl8.6.17"
+
 trap - ERR
 log_done
 

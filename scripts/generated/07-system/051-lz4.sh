@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: lz4
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "lz4-1.10.0" ]; then
+  log "Removing prior lz4-1.10.0 tree"
+  rm -rf "lz4-1.10.0"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 lz4-1.10.0*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "lz4-1.10.0" ]; then
+  die "Source tarball not found matching lz4-1.10.0"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "lz4-1.10.0" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "lz4-1.10.0" ] || die "Missing source directory lz4-1.10.0"
 cd "lz4-1.10.0"
 log "Building in $(pwd)"
 
@@ -42,6 +50,10 @@ make BUILD_STATIC=no PREFIX=/usr install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree lz4-1.10.0"
+rm -rf "lz4-1.10.0"
+
 trap - ERR
 log_done
 

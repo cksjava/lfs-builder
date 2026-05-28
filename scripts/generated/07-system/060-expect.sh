@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: expect
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "expect5.45.4" ]; then
+  log "Removing prior expect5.45.4 tree"
+  rm -rf "expect5.45.4"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 expect5.45.4*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "expect5.45.4" ]; then
+  die "Source tarball not found matching expect5.45.4"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "expect5.45.4" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "expect5.45.4" ] || die "Missing source directory expect5.45.4"
 cd "expect5.45.4"
 log "Building in $(pwd)"
 
@@ -57,6 +65,10 @@ ln -sfvf expect5.45.4/libexpect5.45.4.so /usr/lib
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree expect5.45.4"
+rm -rf "expect5.45.4"
+
 trap - ERR
 log_done
 

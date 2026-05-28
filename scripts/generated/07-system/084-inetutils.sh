@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: inetutils
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "inetutils-2.7" ]; then
+  log "Removing prior inetutils-2.7 tree"
+  rm -rf "inetutils-2.7"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 inetutils-2.7*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "inetutils-2.7" ]; then
+  die "Source tarball not found matching inetutils-2.7"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "inetutils-2.7" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "inetutils-2.7" ] || die "Missing source directory inetutils-2.7"
 cd "inetutils-2.7"
 log "Building in $(pwd)"
 
@@ -64,6 +72,10 @@ mv -v /usr/{,s}bin/ifconfig
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree inetutils-2.7"
+rm -rf "inetutils-2.7"
+
 trap - ERR
 log_done
 

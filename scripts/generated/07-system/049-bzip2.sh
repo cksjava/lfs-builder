@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: bzip2
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "bzip2-1.0.8" ]; then
+  log "Removing prior bzip2-1.0.8 tree"
+  rm -rf "bzip2-1.0.8"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 bzip2-1.0.8*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "bzip2-1.0.8" ]; then
+  die "Source tarball not found matching bzip2-1.0.8"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "bzip2-1.0.8" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "bzip2-1.0.8" ] || die "Missing source directory bzip2-1.0.8"
 cd "bzip2-1.0.8"
 log "Building in $(pwd)"
 
@@ -68,6 +76,10 @@ rm -fv /usr/lib/libbz2.a
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree bzip2-1.0.8"
+rm -rf "bzip2-1.0.8"
+
 trap - ERR
 log_done
 

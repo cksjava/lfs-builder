@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: systemd
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "systemd-259.1" ]; then
+  log "Removing prior systemd-259.1 tree"
+  rm -rf "systemd-259.1"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 systemd-259.1*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "systemd-259.1" ]; then
+  die "Source tarball not found matching systemd-259.1"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "systemd-259.1" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "systemd-259.1" ] || die "Missing source directory systemd-259.1"
 cd "systemd-259.1"
 log "Building in $(pwd)"
 
@@ -83,6 +91,10 @@ systemctl preset-all
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree systemd-259.1"
+rm -rf "systemd-259.1"
+
 trap - ERR
 log_done
 

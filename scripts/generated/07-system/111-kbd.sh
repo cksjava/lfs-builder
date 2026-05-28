@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: kbd
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "kbd-2.9.0" ]; then
+  log "Removing prior kbd-2.9.0 tree"
+  rm -rf "kbd-2.9.0"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 kbd-2.9.0*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "kbd-2.9.0" ]; then
+  die "Source tarball not found matching kbd-2.9.0"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "kbd-2.9.0" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "kbd-2.9.0" ] || die "Missing source directory kbd-2.9.0"
 cd "kbd-2.9.0"
 log "Building in $(pwd)"
 
@@ -59,6 +67,10 @@ cp -R -v docs/doc -T /usr/share/doc/kbd-2.9.0
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree kbd-2.9.0"
+rm -rf "kbd-2.9.0"
+
 trap - ERR
 log_done
 

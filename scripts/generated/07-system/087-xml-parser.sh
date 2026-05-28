@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: xml-parser
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "XML-Parser-2.47" ]; then
+  log "Removing prior XML-Parser-2.47 tree"
+  rm -rf "XML-Parser-2.47"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 XML-Parser-2.47*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "XML-Parser-2.47" ]; then
+  die "Source tarball not found matching XML-Parser-2.47"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "XML-Parser-2.47" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "XML-Parser-2.47" ] || die "Missing source directory XML-Parser-2.47"
 cd "XML-Parser-2.47"
 log "Building in $(pwd)"
 
@@ -45,6 +53,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree XML-Parser-2.47"
+rm -rf "XML-Parser-2.47"
+
 trap - ERR
 log_done
 

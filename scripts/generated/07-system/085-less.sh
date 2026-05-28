@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: less
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "less-692" ]; then
+  log "Removing prior less-692 tree"
+  rm -rf "less-692"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 less-692*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "less-692" ]; then
+  die "Source tarball not found matching less-692"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "less-692" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "less-692" ] || die "Missing source directory less-692"
 cd "less-692"
 log "Building in $(pwd)"
 
@@ -49,6 +57,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree less-692"
+rm -rf "less-692"
+
 trap - ERR
 log_done
 

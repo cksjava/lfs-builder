@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: libtool
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "libtool-2.5.4" ]; then
+  log "Removing prior libtool-2.5.4 tree"
+  rm -rf "libtool-2.5.4"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 libtool-2.5.4*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "libtool-2.5.4" ]; then
+  die "Source tarball not found matching libtool-2.5.4"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "libtool-2.5.4" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "libtool-2.5.4" ] || die "Missing source directory libtool-2.5.4"
 cd "libtool-2.5.4"
 log "Building in $(pwd)"
 
@@ -52,6 +60,10 @@ rm -fv /usr/lib/libltdl.a
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree libtool-2.5.4"
+rm -rf "libtool-2.5.4"
+
 trap - ERR
 log_done
 

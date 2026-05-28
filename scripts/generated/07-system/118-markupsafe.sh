@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: markupsafe
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "markupsafe-3.0.3" ]; then
+  log "Removing prior markupsafe-3.0.3 tree"
+  rm -rf "markupsafe-3.0.3"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 markupsafe-3.0.3*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "markupsafe-3.0.3" ]; then
+  die "Source tarball not found matching markupsafe-3.0.3"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "markupsafe-3.0.3" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "markupsafe-3.0.3" ] || die "Missing source directory markupsafe-3.0.3"
 cd "markupsafe-3.0.3"
 log "Building in $(pwd)"
 
@@ -39,6 +47,10 @@ pip3 install --no-index --find-links dist Markupsafe
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree markupsafe-3.0.3"
+rm -rf "markupsafe-3.0.3"
+
 trap - ERR
 log_done
 

@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: mpfr
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "mpfr-4.2.2" ]; then
+  log "Removing prior mpfr-4.2.2 tree"
+  rm -rf "mpfr-4.2.2"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 mpfr-4.2.2*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "mpfr-4.2.2" ]; then
+  die "Source tarball not found matching mpfr-4.2.2"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "mpfr-4.2.2" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "mpfr-4.2.2" ] || die "Missing source directory mpfr-4.2.2"
 cd "mpfr-4.2.2"
 log "Building in $(pwd)"
 
@@ -54,6 +62,10 @@ make install-html
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree mpfr-4.2.2"
+rm -rf "mpfr-4.2.2"
+
 trap - ERR
 log_done
 

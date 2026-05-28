@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: attr
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "attr-2.5.2" ]; then
+  log "Removing prior attr-2.5.2 tree"
+  rm -rf "attr-2.5.2"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 attr-2.5.2*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "attr-2.5.2" ]; then
+  die "Source tarball not found matching attr-2.5.2"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "attr-2.5.2" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "attr-2.5.2" ] || die "Missing source directory attr-2.5.2"
 cd "attr-2.5.2"
 log "Building in $(pwd)"
 
@@ -52,6 +60,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree attr-2.5.2"
+rm -rf "attr-2.5.2"
+
 trap - ERR
 log_done
 

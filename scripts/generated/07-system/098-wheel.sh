@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: wheel
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "wheel-0.46.3" ]; then
+  log "Removing prior wheel-0.46.3 tree"
+  rm -rf "wheel-0.46.3"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 wheel-0.46.3*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "wheel-0.46.3" ]; then
+  die "Source tarball not found matching wheel-0.46.3"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "wheel-0.46.3" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "wheel-0.46.3" ] || die "Missing source directory wheel-0.46.3"
 cd "wheel-0.46.3"
 log "Building in $(pwd)"
 
@@ -39,6 +47,10 @@ pip3 install --no-index --find-links dist wheel
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree wheel-0.46.3"
+rm -rf "wheel-0.46.3"
+
 trap - ERR
 log_done
 

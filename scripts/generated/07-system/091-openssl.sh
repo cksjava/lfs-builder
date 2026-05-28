@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: openssl
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "openssl-3.6.1" ]; then
+  log "Removing prior openssl-3.6.1 tree"
+  rm -rf "openssl-3.6.1"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 openssl-3.6.1*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "openssl-3.6.1" ]; then
+  die "Source tarball not found matching openssl-3.6.1"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "openssl-3.6.1" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "openssl-3.6.1" ] || die "Missing source directory openssl-3.6.1"
 cd "openssl-3.6.1"
 log "Building in $(pwd)"
 
@@ -56,6 +64,10 @@ cp -vfr doc/* /usr/share/doc/openssl-3.6.1
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree openssl-3.6.1"
+rm -rf "openssl-3.6.1"
+
 trap - ERR
 log_done
 

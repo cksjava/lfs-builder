@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: binutils
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "binutils-2.46.0" ]; then
+  log "Removing prior binutils-2.46.0 tree"
+  rm -rf "binutils-2.46.0"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 binutils-2.46.0*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "binutils-2.46.0" ]; then
+  die "Source tarball not found matching binutils-2.46.0"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "binutils-2.46.0" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "binutils-2.46.0" ] || die "Missing source directory binutils-2.46.0"
 cd "binutils-2.46.0"
 log "Building in $(pwd)"
 
@@ -69,6 +77,10 @@ rm -rfv /usr/lib/lib{bfd,ctf,ctf-nobfd,gprofng,opcodes,sframe}.a \
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree binutils-2.46.0"
+rm -rf "binutils-2.46.0"
+
 trap - ERR
 log_done
 

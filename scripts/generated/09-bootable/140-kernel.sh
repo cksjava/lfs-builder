@@ -9,6 +9,22 @@ LFS_STEP_ID="09-bootable/kernel"
 log_begin
 trap 'log_fail $?' ERR
 
+# Package: kernel
+log "enter sources directory"
+cd "${LFS_SOURCES:?}"
+log "extract source tarball (if needed)"
+TARBALL=$(ls -1 linux-6.18.10*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "linux-6.18.10" ]; then
+  die "Source tarball not found matching linux-6.18.10"
+fi
+if [ -n "$TARBALL" ] && [ ! -d "linux-6.18.10" ]; then
+  log "Extracting $TARBALL"
+  tar -xf "$TARBALL"
+fi
+[ -d "linux-6.18.10" ] || die "Missing source directory linux-6.18.10"
+cd "linux-6.18.10"
+log "Building in $(pwd)"
+
 require_var LFS
 log "entering chroot at ${LFS}"
 chroot "${LFS}" /usr/bin/env -i \
@@ -58,6 +74,10 @@ EOF
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree linux-6.18.10"
+rm -rf "linux-6.18.10"
+
 trap - ERR
 log_done
 

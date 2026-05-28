@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: man-db
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "man-db-2.13.1" ]; then
+  log "Removing prior man-db-2.13.1 tree"
+  rm -rf "man-db-2.13.1"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 man-db-2.13.1*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "man-db-2.13.1" ]; then
+  die "Source tarball not found matching man-db-2.13.1"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "man-db-2.13.1" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "man-db-2.13.1" ] || die "Missing source directory man-db-2.13.1"
 cd "man-db-2.13.1"
 log "Building in $(pwd)"
 
@@ -56,6 +64,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree man-db-2.13.1"
+rm -rf "man-db-2.13.1"
+
 trap - ERR
 log_done
 

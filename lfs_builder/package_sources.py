@@ -15,6 +15,12 @@ _WGET_LIST_PATH = Path(__file__).resolve().parent.parent / "data" / "wget-list-s
 # Steps with no extracted source tree (book commands only).
 NO_SOURCE_STEPS = frozenset({"stripping", "cleanup", "ch8-cleanup"})
 
+# Keep the extracted tree after these steps (a later step reuses the same directory).
+SKIP_SOURCE_CLEANUP_AFTER = frozenset({"linux-headers"})
+
+# Do not remove an existing tree before extract (kernel reuses linux-headers tree).
+SKIP_SOURCE_REMOVE_BEFORE = frozenset({"kernel"})
+
 # Explicit overrides where tarball name, extract directory, or step id do not align.
 # Prefer wget-list auto-match; add entries here only when needed.
 PACKAGE_OVERRIDES: dict[str, dict[str, str]] = {
@@ -28,6 +34,7 @@ PACKAGE_OVERRIDES: dict[str, dict[str, str]] = {
     "gcc": {"tarball_glob": "gcc-15.2.0", "build_dir": "gcc-15.2.0"},
     # Book page has no tar extract; kernel API headers only
     "linux-headers": {"tarball_glob": "linux-6.18.10", "build_dir": "linux-6.18.10"},
+    "kernel": {"tarball_glob": "linux-6.18.10", "build_dir": "linux-6.18.10"},
     # Tarball / directory naming mismatches
     "Python": {"tarball_glob": "Python-3.14.3", "build_dir": "Python-3.14.3"},
     "libelf": {"tarball_glob": "elfutils-0.194", "build_dir": "elfutils-0.194"},
@@ -110,7 +117,14 @@ def build_package_sources(
     mapping: dict[str, PackageSource | None] = {}
 
     for step in build_manifest(book_path):
-        if step.kind != StepKind.PACKAGE:
+        if step.kind != StepKind.PACKAGE and step.id not in PACKAGE_OVERRIDES:
+            continue
+        if step.kind != StepKind.PACKAGE and step.id in PACKAGE_OVERRIDES:
+            entry = PACKAGE_OVERRIDES[step.id]
+            mapping[step.id] = PackageSource(
+                tarball_glob=entry["tarball_glob"],
+                build_dir=entry["build_dir"],
+            )
             continue
         if step.id in NO_SOURCE_STEPS:
             mapping[step.id] = None

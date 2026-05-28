@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: zstd
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "zstd-1.5.7" ]; then
+  log "Removing prior zstd-1.5.7 tree"
+  rm -rf "zstd-1.5.7"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 zstd-1.5.7*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "zstd-1.5.7" ]; then
+  die "Source tarball not found matching zstd-1.5.7"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "zstd-1.5.7" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "zstd-1.5.7" ] || die "Missing source directory zstd-1.5.7"
 cd "zstd-1.5.7"
 log "Building in $(pwd)"
 
@@ -49,6 +57,10 @@ rm -v /usr/lib/libzstd.a
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree zstd-1.5.7"
+rm -rf "zstd-1.5.7"
+
 trap - ERR
 log_done
 

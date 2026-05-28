@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: gmp
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "gmp-6.3.0" ]; then
+  log "Removing prior gmp-6.3.0 tree"
+  rm -rf "gmp-6.3.0"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 gmp-6.3.0*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "gmp-6.3.0" ]; then
+  die "Source tarball not found matching gmp-6.3.0"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "gmp-6.3.0" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "gmp-6.3.0" ] || die "Missing source directory gmp-6.3.0"
 cd "gmp-6.3.0"
 log "Building in $(pwd)"
 
@@ -63,6 +71,10 @@ make install-html
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree gmp-6.3.0"
+rm -rf "gmp-6.3.0"
+
 trap - ERR
 log_done
 

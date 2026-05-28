@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: util-linux
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "util-linux-2.41.3" ]; then
+  log "Removing prior util-linux-2.41.3 tree"
+  rm -rf "util-linux-2.41.3"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 util-linux-2.41.3*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "util-linux-2.41.3" ]; then
+  die "Source tarball not found matching util-linux-2.41.3"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "util-linux-2.41.3" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "util-linux-2.41.3" ] || die "Missing source directory util-linux-2.41.3"
 cd "util-linux-2.41.3"
 log "Building in $(pwd)"
 
@@ -69,6 +77,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree util-linux-2.41.3"
+rm -rf "util-linux-2.41.3"
+
 trap - ERR
 log_done
 

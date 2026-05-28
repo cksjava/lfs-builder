@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: gdbm
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "gdbm-1.26" ]; then
+  log "Removing prior gdbm-1.26 tree"
+  rm -rf "gdbm-1.26"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 gdbm-1.26*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "gdbm-1.26" ]; then
+  die "Source tarball not found matching gdbm-1.26"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "gdbm-1.26" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "gdbm-1.26" ] || die "Missing source directory gdbm-1.26"
 cd "gdbm-1.26"
 log "Building in $(pwd)"
 
@@ -51,6 +59,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree gdbm-1.26"
+rm -rf "gdbm-1.26"
+
 trap - ERR
 log_done
 

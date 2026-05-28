@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: iana-etc
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "iana-etc-20260202" ]; then
+  log "Removing prior iana-etc-20260202 tree"
+  rm -rf "iana-etc-20260202"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 iana-etc-20260202*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "iana-etc-20260202" ]; then
+  die "Source tarball not found matching iana-etc-20260202"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "iana-etc-20260202" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "iana-etc-20260202" ] || die "Missing source directory iana-etc-20260202"
 cd "iana-etc-20260202"
 log "Building in $(pwd)"
 
@@ -36,6 +44,10 @@ cp -v services protocols /etc
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree iana-etc-20260202"
+rm -rf "iana-etc-20260202"
+
 trap - ERR
 log_done
 

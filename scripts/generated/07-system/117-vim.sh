@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: vim
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "vim-9.2.0078" ]; then
+  log "Removing prior vim-9.2.0078 tree"
+  rm -rf "vim-9.2.0078"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 vim-9.2.0078*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "vim-9.2.0078" ]; then
+  die "Source tarball not found matching vim-9.2.0078"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "vim-9.2.0078" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "vim-9.2.0078" ] || die "Missing source directory vim-9.2.0078"
 cd "vim-9.2.0078"
 log "Building in $(pwd)"
 
@@ -87,6 +95,10 @@ vim -c ':options'
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree vim-9.2.0078"
+rm -rf "vim-9.2.0078"
+
 trap - ERR
 log_done
 

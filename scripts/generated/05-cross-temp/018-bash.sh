@@ -14,12 +14,20 @@ require_var LFS
 # Package: bash
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "bash-5.3" ]; then
+  log "Removing prior bash-5.3 tree"
+  rm -rf "bash-5.3"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 bash-5.3*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "bash-5.3" ]; then
+  die "Source tarball not found matching bash-5.3"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "bash-5.3" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "bash-5.3" ] || die "Missing source directory bash-5.3"
 cd "bash-5.3"
 log "Building in $(pwd)"
 
@@ -37,6 +45,10 @@ make DESTDIR=$LFS install
 
 log_step 4 4 'ln -svf bash $LFS/bin/sh'
 ln -svf bash $LFS/bin/sh
+
+cd "${LFS_SOURCES:?}"
+log "Removing source tree bash-5.3"
+rm -rf "bash-5.3"
 
 trap - ERR
 log_done

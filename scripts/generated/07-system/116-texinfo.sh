@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: texinfo
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "texinfo-7.2" ]; then
+  log "Removing prior texinfo-7.2 tree"
+  rm -rf "texinfo-7.2"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 texinfo-7.2*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "texinfo-7.2" ]; then
+  die "Source tarball not found matching texinfo-7.2"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "texinfo-7.2" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "texinfo-7.2" ] || die "Missing source directory texinfo-7.2"
 cd "texinfo-7.2"
 log "Building in $(pwd)"
 
@@ -63,6 +71,10 @@ popd
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree texinfo-7.2"
+rm -rf "texinfo-7.2"
+
 trap - ERR
 log_done
 

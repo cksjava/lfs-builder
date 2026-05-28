@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: dejagnu
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "dejagnu-1.6.3" ]; then
+  log "Removing prior dejagnu-1.6.3 tree"
+  rm -rf "dejagnu-1.6.3"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 dejagnu-1.6.3*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "dejagnu-1.6.3" ]; then
+  die "Source tarball not found matching dejagnu-1.6.3"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "dejagnu-1.6.3" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "dejagnu-1.6.3" ] || die "Missing source directory dejagnu-1.6.3"
 cd "dejagnu-1.6.3"
 log "Building in $(pwd)"
 
@@ -54,6 +62,10 @@ install -v -m644   doc/dejagnu.{html,txt} /usr/share/doc/dejagnu-1.6.3
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree dejagnu-1.6.3"
+rm -rf "dejagnu-1.6.3"
+
 trap - ERR
 log_done
 

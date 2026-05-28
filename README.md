@@ -35,6 +35,8 @@ This writes **142 shell scripts** under `scripts/generated/<phase>/` plus `manif
 
 Package source directories come from `data/package-sources.json`, not HTML title parsing. Steps with special tarball/directory names (e.g. `linux-headers`, `Python`, `tcl`, `util-linux`) are listed in `PACKAGE_OVERRIDES` inside `lfs_builder/package_sources.py`.
 
+Each package step removes any prior extracted source tree before unpacking, and deletes the tree again after a successful build (so multi-pass packages like GCC get a clean tree each time). `linux-headers` keeps the kernel tree for the later `kernel` step, which removes it when finished.
+
 ## Quick start
 
 After cloning:

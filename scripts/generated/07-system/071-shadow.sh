@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: shadow
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "shadow-4.19.3" ]; then
+  log "Removing prior shadow-4.19.3 tree"
+  rm -rf "shadow-4.19.3"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 shadow-4.19.3*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "shadow-4.19.3" ]; then
+  die "Source tarball not found matching shadow-4.19.3"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "shadow-4.19.3" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "shadow-4.19.3" ] || die "Missing source directory shadow-4.19.3"
 cd "shadow-4.19.3"
 log "Building in $(pwd)"
 
@@ -74,6 +82,10 @@ sed -i '/MAIL/s/yes/no/' /etc/default/useradd
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree shadow-4.19.3"
+rm -rf "shadow-4.19.3"
+
 trap - ERR
 log_done
 

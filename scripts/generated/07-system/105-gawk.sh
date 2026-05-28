@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: gawk
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "gawk-5.3.2" ]; then
+  log "Removing prior gawk-5.3.2 tree"
+  rm -rf "gawk-5.3.2"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 gawk-5.3.2*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "gawk-5.3.2" ]; then
+  die "Source tarball not found matching gawk-5.3.2"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "gawk-5.3.2" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "gawk-5.3.2" ] || die "Missing source directory gawk-5.3.2"
 cd "gawk-5.3.2"
 log "Building in $(pwd)"
 
@@ -60,6 +68,10 @@ install -vDm644 doc/{awkforai.txt,*.{eps,pdf,jpg}} -t /usr/share/doc/gawk-5.3.2
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree gawk-5.3.2"
+rm -rf "gawk-5.3.2"
+
 trap - ERR
 log_done
 

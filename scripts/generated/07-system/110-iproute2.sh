@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: iproute2
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "iproute2-6.18.0" ]; then
+  log "Removing prior iproute2-6.18.0 tree"
+  rm -rf "iproute2-6.18.0"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 iproute2-6.18.0*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "iproute2-6.18.0" ]; then
+  die "Source tarball not found matching iproute2-6.18.0"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "iproute2-6.18.0" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "iproute2-6.18.0" ] || die "Missing source directory iproute2-6.18.0"
 cd "iproute2-6.18.0"
 log "Building in $(pwd)"
 
@@ -46,6 +54,10 @@ install -vDm644 COPYING README* -t /usr/share/doc/iproute2-6.18.0
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree iproute2-6.18.0"
+rm -rf "iproute2-6.18.0"
+
 trap - ERR
 log_done
 

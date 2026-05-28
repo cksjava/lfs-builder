@@ -180,6 +180,10 @@
       "tarball_glob": "kbd-2.9.0",
       "build_dir": "kbd-2.9.0"
     },
+    "kernel": {
+      "tarball_glob": "linux-6.18.10",
+      "build_dir": "linux-6.18.10"
+    },
     "kmod": {
       "tarball_glob": "kmod-34.2",
       "build_dir": "kmod-34.2"

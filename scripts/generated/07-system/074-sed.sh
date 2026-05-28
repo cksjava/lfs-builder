@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: sed
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "sed-4.9" ]; then
+  log "Removing prior sed-4.9 tree"
+  rm -rf "sed-4.9"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 sed-4.9*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "sed-4.9" ]; then
+  die "Source tarball not found matching sed-4.9"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "sed-4.9" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "sed-4.9" ] || die "Missing source directory sed-4.9"
 cd "sed-4.9"
 log "Building in $(pwd)"
 
@@ -53,6 +61,10 @@ install -m644 doc/sed.html /usr/share/doc/sed-4.9
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree sed-4.9"
+rm -rf "sed-4.9"
+
 trap - ERR
 log_done
 

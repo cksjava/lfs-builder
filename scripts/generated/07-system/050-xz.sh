@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: xz
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "xz-5.8.2" ]; then
+  log "Removing prior xz-5.8.2 tree"
+  rm -rf "xz-5.8.2"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 xz-5.8.2*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "xz-5.8.2" ]; then
+  die "Source tarball not found matching xz-5.8.2"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "xz-5.8.2" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "xz-5.8.2" ] || die "Missing source directory xz-5.8.2"
 cd "xz-5.8.2"
 log "Building in $(pwd)"
 
@@ -51,6 +59,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree xz-5.8.2"
+rm -rf "xz-5.8.2"
+
 trap - ERR
 log_done
 

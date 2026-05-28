@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: make
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "make-4.4.1" ]; then
+  log "Removing prior make-4.4.1 tree"
+  rm -rf "make-4.4.1"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 make-4.4.1*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "make-4.4.1" ]; then
+  die "Source tarball not found matching make-4.4.1"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "make-4.4.1" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "make-4.4.1" ] || die "Missing source directory make-4.4.1"
 cd "make-4.4.1"
 log "Building in $(pwd)"
 
@@ -50,6 +58,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree make-4.4.1"
+rm -rf "make-4.4.1"
+
 trap - ERR
 log_done
 

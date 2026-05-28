@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: autoconf
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "autoconf-2.72" ]; then
+  log "Removing prior autoconf-2.72 tree"
+  rm -rf "autoconf-2.72"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 autoconf-2.72*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "autoconf-2.72" ]; then
+  die "Source tarball not found matching autoconf-2.72"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "autoconf-2.72" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "autoconf-2.72" ] || die "Missing source directory autoconf-2.72"
 cd "autoconf-2.72"
 log "Building in $(pwd)"
 
@@ -49,6 +57,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree autoconf-2.72"
+rm -rf "autoconf-2.72"
+
 trap - ERR
 log_done
 

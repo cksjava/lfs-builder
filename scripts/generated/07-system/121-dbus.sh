@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: dbus
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "dbus-1.16.2" ]; then
+  log "Removing prior dbus-1.16.2 tree"
+  rm -rf "dbus-1.16.2"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 dbus-1.16.2*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "dbus-1.16.2" ]; then
+  die "Source tarball not found matching dbus-1.16.2"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "dbus-1.16.2" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "dbus-1.16.2" ] || die "Missing source directory dbus-1.16.2"
 cd "dbus-1.16.2"
 log "Building in $(pwd)"
 
@@ -52,6 +60,10 @@ ln -sfv /etc/machine-id /var/lib/dbus
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree dbus-1.16.2"
+rm -rf "dbus-1.16.2"
+
 trap - ERR
 log_done
 

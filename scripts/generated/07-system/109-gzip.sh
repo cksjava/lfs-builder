@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: gzip
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "gzip-1.14" ]; then
+  log "Removing prior gzip-1.14 tree"
+  rm -rf "gzip-1.14"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 gzip-1.14*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "gzip-1.14" ]; then
+  die "Source tarball not found matching gzip-1.14"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "gzip-1.14" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "gzip-1.14" ] || die "Missing source directory gzip-1.14"
 cd "gzip-1.14"
 log "Building in $(pwd)"
 
@@ -49,6 +57,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree gzip-1.14"
+rm -rf "gzip-1.14"
+
 trap - ERR
 log_done
 

@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: psmisc
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "psmisc-23.7" ]; then
+  log "Removing prior psmisc-23.7 tree"
+  rm -rf "psmisc-23.7"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 psmisc-23.7*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "psmisc-23.7" ]; then
+  die "Source tarball not found matching psmisc-23.7"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "psmisc-23.7" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "psmisc-23.7" ] || die "Missing source directory psmisc-23.7"
 cd "psmisc-23.7"
 log "Building in $(pwd)"
 
@@ -49,6 +57,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree psmisc-23.7"
+rm -rf "psmisc-23.7"
+
 trap - ERR
 log_done
 

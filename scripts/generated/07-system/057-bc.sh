@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: bc
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "bc-7.0.3" ]; then
+  log "Removing prior bc-7.0.3 tree"
+  rm -rf "bc-7.0.3"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 bc-7.0.3*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "bc-7.0.3" ]; then
+  die "Source tarball not found matching bc-7.0.3"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "bc-7.0.3" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "bc-7.0.3" ] || die "Missing source directory bc-7.0.3"
 cd "bc-7.0.3"
 log "Building in $(pwd)"
 
@@ -45,6 +53,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree bc-7.0.3"
+rm -rf "bc-7.0.3"
+
 trap - ERR
 log_done
 

@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: Python
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "Python-3.14.3" ]; then
+  log "Removing prior Python-3.14.3 tree"
+  rm -rf "Python-3.14.3"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 Python-3.14.3*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "Python-3.14.3" ]; then
+  die "Source tarball not found matching Python-3.14.3"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "Python-3.14.3" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "Python-3.14.3" ] || die "Missing source directory Python-3.14.3"
 cd "Python-3.14.3"
 log "Building in $(pwd)"
 
@@ -45,6 +53,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree Python-3.14.3"
+rm -rf "Python-3.14.3"
+
 trap - ERR
 log_done
 

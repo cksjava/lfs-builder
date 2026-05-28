@@ -14,12 +14,20 @@ require_var LFS
 # Package: ncurses
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "ncurses-6.6" ]; then
+  log "Removing prior ncurses-6.6 tree"
+  rm -rf "ncurses-6.6"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 ncurses-6.6*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "ncurses-6.6" ]; then
+  die "Source tarball not found matching ncurses-6.6"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "ncurses-6.6" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "ncurses-6.6" ] || die "Missing source directory ncurses-6.6"
 cd "ncurses-6.6"
 log "Building in $(pwd)"
 
@@ -54,6 +62,10 @@ make DESTDIR=$LFS install
 ln -svf libncursesw.so $LFS/usr/lib/libncurses.so
 sed -e 's/^#if.*XOPEN.*$/#if 1/' \
     -i $LFS/usr/include/curses.h
+
+cd "${LFS_SOURCES:?}"
+log "Removing source tree ncurses-6.6"
+rm -rf "ncurses-6.6"
 
 trap - ERR
 log_done

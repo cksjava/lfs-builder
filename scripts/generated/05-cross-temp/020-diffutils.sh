@@ -14,12 +14,20 @@ require_var LFS
 # Package: diffutils
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "diffutils-3.12" ]; then
+  log "Removing prior diffutils-3.12 tree"
+  rm -rf "diffutils-3.12"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 diffutils-3.12*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "diffutils-3.12" ]; then
+  die "Source tarball not found matching diffutils-3.12"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "diffutils-3.12" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "diffutils-3.12" ] || die "Missing source directory diffutils-3.12"
 cd "diffutils-3.12"
 log "Building in $(pwd)"
 
@@ -34,6 +42,10 @@ make
 
 log_step 3 3 'make'
 make DESTDIR=$LFS install
+
+cd "${LFS_SOURCES:?}"
+log "Removing source tree diffutils-3.12"
+rm -rf "diffutils-3.12"
 
 trap - ERR
 log_done

@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: perl
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "perl-5.42.0" ]; then
+  log "Removing prior perl-5.42.0 tree"
+  rm -rf "perl-5.42.0"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 perl-5.42.0*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "perl-5.42.0" ]; then
+  die "Source tarball not found matching perl-5.42.0"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "perl-5.42.0" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "perl-5.42.0" ] || die "Missing source directory perl-5.42.0"
 cd "perl-5.42.0"
 log "Building in $(pwd)"
 
@@ -51,6 +59,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree perl-5.42.0"
+rm -rf "perl-5.42.0"
+
 trap - ERR
 log_done
 

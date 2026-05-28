@@ -14,12 +14,20 @@ require_var LFS
 # Package: findutils
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "findutils-4.10.0" ]; then
+  log "Removing prior findutils-4.10.0 tree"
+  rm -rf "findutils-4.10.0"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 findutils-4.10.0*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "findutils-4.10.0" ]; then
+  die "Source tarball not found matching findutils-4.10.0"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "findutils-4.10.0" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "findutils-4.10.0" ] || die "Missing source directory findutils-4.10.0"
 cd "findutils-4.10.0"
 log "Building in $(pwd)"
 
@@ -34,6 +42,10 @@ make
 
 log_step 3 3 'make'
 make DESTDIR=$LFS install
+
+cd "${LFS_SOURCES:?}"
+log "Removing source tree findutils-4.10.0"
+rm -rf "findutils-4.10.0"
 
 trap - ERR
 log_done

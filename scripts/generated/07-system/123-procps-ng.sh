@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: procps-ng
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "procps-ng-4.0.6" ]; then
+  log "Removing prior procps-ng-4.0.6 tree"
+  rm -rf "procps-ng-4.0.6"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 procps-ng-4.0.6*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "procps-ng-4.0.6" ]; then
+  die "Source tarball not found matching procps-ng-4.0.6"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "procps-ng-4.0.6" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "procps-ng-4.0.6" ] || die "Missing source directory procps-ng-4.0.6"
 cd "procps-ng-4.0.6"
 log "Building in $(pwd)"
 
@@ -55,6 +63,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree procps-ng-4.0.6"
+rm -rf "procps-ng-4.0.6"
+
 trap - ERR
 log_done
 

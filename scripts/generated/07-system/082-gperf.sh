@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: gperf
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "gperf-3.3" ]; then
+  log "Removing prior gperf-3.3 tree"
+  rm -rf "gperf-3.3"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 gperf-3.3*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "gperf-3.3" ]; then
+  die "Source tarball not found matching gperf-3.3"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "gperf-3.3" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "gperf-3.3" ] || die "Missing source directory gperf-3.3"
 cd "gperf-3.3"
 log "Building in $(pwd)"
 
@@ -49,6 +57,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree gperf-3.3"
+rm -rf "gperf-3.3"
+
 trap - ERR
 log_done
 

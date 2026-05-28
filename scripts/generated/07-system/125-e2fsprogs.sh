@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: e2fsprogs
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "e2fsprogs-1.47.3" ]; then
+  log "Removing prior e2fsprogs-1.47.3 tree"
+  rm -rf "e2fsprogs-1.47.3"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 e2fsprogs-1.47.3*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "e2fsprogs-1.47.3" ]; then
+  die "Source tarball not found matching e2fsprogs-1.47.3"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "e2fsprogs-1.47.3" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "e2fsprogs-1.47.3" ] || die "Missing source directory e2fsprogs-1.47.3"
 cd "e2fsprogs-1.47.3"
 log "Building in $(pwd)"
 
@@ -74,6 +82,10 @@ sed 's/metadata_csum_seed,//' -i /etc/mke2fs.conf
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree e2fsprogs-1.47.3"
+rm -rf "e2fsprogs-1.47.3"
+
 trap - ERR
 log_done
 

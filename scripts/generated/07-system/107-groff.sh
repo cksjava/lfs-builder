@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: groff
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "groff-1.23.0" ]; then
+  log "Removing prior groff-1.23.0 tree"
+  rm -rf "groff-1.23.0"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 groff-1.23.0*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "groff-1.23.0" ]; then
+  die "Source tarball not found matching groff-1.23.0"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "groff-1.23.0" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "groff-1.23.0" ] || die "Missing source directory groff-1.23.0"
 cd "groff-1.23.0"
 log "Building in $(pwd)"
 
@@ -49,6 +57,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree groff-1.23.0"
+rm -rf "groff-1.23.0"
+
 trap - ERR
 log_done
 

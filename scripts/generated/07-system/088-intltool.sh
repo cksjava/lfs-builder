@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: intltool
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "intltool-0.51.0" ]; then
+  log "Removing prior intltool-0.51.0 tree"
+  rm -rf "intltool-0.51.0"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 intltool-0.51.0*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "intltool-0.51.0" ]; then
+  die "Source tarball not found matching intltool-0.51.0"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "intltool-0.51.0" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "intltool-0.51.0" ] || die "Missing source directory intltool-0.51.0"
 cd "intltool-0.51.0"
 log "Building in $(pwd)"
 
@@ -53,6 +61,10 @@ install -v -Dm644 doc/I18N-HOWTO /usr/share/doc/intltool-0.51.0/I18N-HOWTO
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree intltool-0.51.0"
+rm -rf "intltool-0.51.0"
+
 trap - ERR
 log_done
 

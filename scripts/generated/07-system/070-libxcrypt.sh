@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: libxcrypt
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "libxcrypt-4.5.2" ]; then
+  log "Removing prior libxcrypt-4.5.2 tree"
+  rm -rf "libxcrypt-4.5.2"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 libxcrypt-4.5.2*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "libxcrypt-4.5.2" ]; then
+  die "Source tarball not found matching libxcrypt-4.5.2"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "libxcrypt-4.5.2" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "libxcrypt-4.5.2" ] || die "Missing source directory libxcrypt-4.5.2"
 cd "libxcrypt-4.5.2"
 log "Building in $(pwd)"
 
@@ -66,6 +74,10 @@ cp -av --remove-destination .libs/libcrypt.so.1* /usr/lib
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree libxcrypt-4.5.2"
+rm -rf "libxcrypt-4.5.2"
+
 trap - ERR
 log_done
 

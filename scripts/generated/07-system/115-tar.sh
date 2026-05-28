@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: tar
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "tar-1.35" ]; then
+  log "Removing prior tar-1.35 tree"
+  rm -rf "tar-1.35"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 tar-1.35*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "tar-1.35" ]; then
+  die "Source tarball not found matching tar-1.35"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "tar-1.35" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "tar-1.35" ] || die "Missing source directory tar-1.35"
 cd "tar-1.35"
 log "Building in $(pwd)"
 
@@ -51,6 +59,10 @@ make -C doc install-html docdir=/usr/share/doc/tar-1.35
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree tar-1.35"
+rm -rf "tar-1.35"
+
 trap - ERR
 log_done
 

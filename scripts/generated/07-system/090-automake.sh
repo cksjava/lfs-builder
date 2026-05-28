@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: automake
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "automake-1.18.1" ]; then
+  log "Removing prior automake-1.18.1 tree"
+  rm -rf "automake-1.18.1"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 automake-1.18.1*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "automake-1.18.1" ]; then
+  die "Source tarball not found matching automake-1.18.1"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "automake-1.18.1" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "automake-1.18.1" ] || die "Missing source directory automake-1.18.1"
 cd "automake-1.18.1"
 log "Building in $(pwd)"
 
@@ -45,6 +53,10 @@ make install
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree automake-1.18.1"
+rm -rf "automake-1.18.1"
+
 trap - ERR
 log_done
 

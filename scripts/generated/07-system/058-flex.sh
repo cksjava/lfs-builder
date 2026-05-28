@@ -12,12 +12,20 @@ trap 'log_fail $?' ERR
 # Package: flex
 log "enter sources directory"
 cd "${LFS_SOURCES:?}"
+if [ -d "flex-2.6.4" ]; then
+  log "Removing prior flex-2.6.4 tree"
+  rm -rf "flex-2.6.4"
+fi
 log "extract source tarball (if needed)"
 TARBALL=$(ls -1 flex-2.6.4*.tar.* 2>/dev/null | head -1)
+if [ -z "$TARBALL" ] && [ ! -d "flex-2.6.4" ]; then
+  die "Source tarball not found matching flex-2.6.4"
+fi
 if [ -n "$TARBALL" ] && [ ! -d "flex-2.6.4" ]; then
   log "Extracting $TARBALL"
   tar -xf "$TARBALL"
 fi
+[ -d "flex-2.6.4" ] || die "Missing source directory flex-2.6.4"
 cd "flex-2.6.4"
 log "Building in $(pwd)"
 
@@ -55,6 +63,10 @@ ln -svf flex.1 /usr/share/man/man1/lex.1
 
 CHROOT_EOF
 log "left chroot"
+cd "${LFS_SOURCES:?}"
+log "Removing source tree flex-2.6.4"
+rm -rf "flex-2.6.4"
+
 trap - ERR
 log_done
 
