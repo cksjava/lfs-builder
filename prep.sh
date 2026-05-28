@@ -44,6 +44,9 @@ fi
 
 chmod +x "$VC"
 
+echo "==> Pointing /bin/sh at bash (book requirement)"
+ln -sf bash /bin/sh
+
 echo "==> Installing LFS chapter 2.2 host packages (Debian/Ubuntu)"
 if command -v apt-get >/dev/null; then
   export DEBIAN_FRONTEND=noninteractive
@@ -65,17 +68,10 @@ else
   exit 1
 fi
 
-echo "==> Ensuring /bin/sh uses bash (book requirement)"
-if [[ -x /bin/bash ]]; then
-  if [[ -x /usr/sbin/update-alternatives ]]; then
-    update-alternatives --install /bin/sh sh /bin/bash 100 2>/dev/null || true
-    update-alternatives --set sh /bin/bash 2>/dev/null || true
-  fi
-  if ! sh --version 2>&1 | grep -qi bash; then
-    echo "Warning: /bin/sh is not bash — run: sudo ln -sf bash /bin/sh" >&2
-  else
-    echo "OK: /bin/sh provides bash"
-  fi
+if sh --version 2>&1 | grep -qi bash; then
+  echo "OK: /bin/sh provides bash"
+else
+  echo "Warning: /bin/sh is not bash after package install" >&2
 fi
 
 echo "==> Ensuring /usr/bin/yacc points to bison"
