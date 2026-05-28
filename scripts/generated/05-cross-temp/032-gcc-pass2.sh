@@ -88,6 +88,18 @@ cd "${LFS_SOURCES:?}"
 log "Removing source tree gcc-15.2.0"
 rm -rf "gcc-15.2.0"
 
+log "adjust gcc specs for use inside chroot"
+specfiles=$(find "${LFS}/usr/lib/gcc" -name specs -type f 2>/dev/null || true)
+if [ -z "$specfiles" ]; then
+  die "no gcc specs files under ${LFS}/usr/lib/gcc"
+fi
+for specfile in $specfiles; do
+  if grep -q "${LFS}" "$specfile" 2>/dev/null; then
+    sed -i "s|${LFS}||g" "$specfile"
+    log "stripped ${LFS} prefix from ${specfile#${LFS}}"
+  fi
+done
+
 trap - ERR
 log_done
 

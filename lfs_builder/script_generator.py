@@ -270,6 +270,24 @@ def _package_source_for_step(
     return None
 
 
+def _fix_gcc_specs_lines() -> list[str]:
+    """Strip $LFS from installed gcc specs so the compiler works inside chroot."""
+    return [
+        'log "adjust gcc specs for use inside chroot"',
+        'specfiles=$(find "${LFS}/usr/lib/gcc" -name specs -type f 2>/dev/null || true)',
+        'if [ -z "$specfiles" ]; then',
+        '  die "no gcc specs files under ${LFS}/usr/lib/gcc"',
+        "fi",
+        'for specfile in $specfiles; do',
+        '  if grep -q "${LFS}" "$specfile" 2>/dev/null; then',
+        '    sed -i "s|${LFS}||g" "$specfile"',
+        '    log "stripped ${LFS} prefix from ${specfile#${LFS}}"',
+        "  fi",
+        "done",
+        "",
+    ]
+
+
 def _chroot_build_env_preamble() -> list[str]:
     """Environment for chapter 7+ commands inside chroot (see chroot.html)."""
     return [
@@ -376,6 +394,8 @@ def generate_step_script(
 
     if pkg_source is not None:
         lines.extend(_package_postamble(pkg_source, step.id))
+    if step.id == "gcc-pass2":
+        lines.extend(_fix_gcc_specs_lines())
 
     if step.id not in ("filesystem", "mount"):
         lines.extend(_script_footer())

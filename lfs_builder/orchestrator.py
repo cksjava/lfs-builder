@@ -131,6 +131,26 @@ class LFSOrchestrator:
     def _chroot_stage_dir(self) -> Path:
         return self._lfs_stage_dir() / "chroot-runner"
 
+    def _fix_gcc_specs(self) -> None:
+        """Remove $LFS path prefixes from gcc specs (needed for chapter 7 chroot)."""
+        lfs = Path(self.cfg.lfs_mount)
+        specs_files = [p for p in lfs.glob("usr/lib/gcc/**/specs") if p.is_file()]
+        if not specs_files:
+            self._log(
+                f"[chroot-runner] warning: no gcc specs under {lfs}/usr/lib/gcc"
+            )
+            return
+        prefix = self.cfg.lfs_mount
+        for spec in specs_files:
+            text = spec.read_text(encoding="utf-8", errors="replace")
+            if prefix not in text:
+                continue
+            spec.write_text(text.replace(prefix, ""), encoding="utf-8")
+            self._log(
+                f"[chroot-runner] stripped {prefix} from "
+                f"{spec.relative_to(lfs)}"
+            )
+
     def _stage_script_for_lfs_user(self, script: Path) -> tuple[Path, Path]:
         """Copy script and lib under $LFS/sources so user lfs can read them."""
         stage_dir = self._lfs_stage_dir()
@@ -183,6 +203,8 @@ class LFSOrchestrator:
         todo = [e for e in block if e["id"] not in self._state.get("completed", [])]
         if not todo:
             return [], end, None
+
+        self._fix_gcc_specs()
 
         stage = self._chroot_stage_dir()
         scripts_dir = stage / "scripts"
@@ -238,6 +260,19 @@ class LFSOrchestrator:
                     'export CONFIG_SITE="${CONFIG_SITE:-/usr/share/config.site}"',
                     'export LC_ALL=C',
                     'export LANG=C',
+                    "",
+                    '_verify_chroot_toolchain() {',
+                    '  local cc1',
+                    '  cc1=$(gcc -print-prog-name=cc1) || true',
+                    '  if [ -z "$cc1" ] || [ ! -x "$cc1" ]; then',
+                    '    die "gcc cannot run cc1 (got: ${cc1:-<empty>}). Chapter 6 gcc-pass2 specs may still reference the host $LFS mount path; pull latest lfs-builder and resume."',
+                    "  fi",
+                    '  echo "int main(void){return 0;}" > /tmp/.lfs-cc-test.c',
+                    '  gcc /tmp/.lfs-cc-test.c -o /tmp/.lfs-cc-test || die "gcc test compile failed inside chroot"',
+                    '  /tmp/.lfs-cc-test || die "gcc test binary failed inside chroot"',
+                    '  rm -f /tmp/.lfs-cc-test /tmp/.lfs-cc-test.c',
+                    "}",
+                    "_verify_chroot_toolchain",
                     "",
                     'while IFS="|" read -r step_id script_path; do',
                     '  [[ -z "${step_id}" ]] && continue',
