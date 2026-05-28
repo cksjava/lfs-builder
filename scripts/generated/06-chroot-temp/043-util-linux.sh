@@ -14,6 +14,11 @@ export TERM="${TERM:-linux}"
 export PS1="(lfs chroot) \u:\w\$ "
 export PATH=/usr/bin:/usr/sbin
 export CONFIG_SITE="${CONFIG_SITE:-/usr/share/config.site}"
+if [ -z "${COMPILER_PATH:-}" ]; then
+  _cc1=$(find /usr/libexec/gcc /usr/lib/gcc /tools/libexec/gcc \
+    -name cc1 -type f 2>/dev/null | head -1)
+  [ -n "$_cc1" ] && export COMPILER_PATH="$(dirname "$_cc1")"
+fi
 
 # Package: util-linux
 log "enter sources directory"

@@ -271,19 +271,21 @@ def _package_source_for_step(
 
 
 def _fix_gcc_specs_lines() -> list[str]:
-    """Strip $LFS from installed gcc specs so the compiler works inside chroot."""
+    """Strip $LFS from gcc specs; verify cc1 was installed under /usr."""
     return [
         'log "adjust gcc specs for use inside chroot"',
-        'specfiles=$(find "${LFS}/usr/lib/gcc" -name specs -type f 2>/dev/null || true)',
-        'if [ -z "$specfiles" ]; then',
-        '  die "no gcc specs files under ${LFS}/usr/lib/gcc"',
+        'cc1=$(find "${LFS}/usr/libexec/gcc" "${LFS}/usr/lib/gcc" \\',
+        '  -name cc1 -type f 2>/dev/null | head -1)',
+        'if [ -z "$cc1" ]; then',
+        '  die "no cc1 under ${LFS}/usr — chapter 6 gcc-pass2 may be incomplete"',
         "fi",
-        'for specfile in $specfiles; do',
+        'while IFS= read -r specfile; do',
+        '  [ -f "$specfile" ] || continue',
         '  if grep -q "${LFS}" "$specfile" 2>/dev/null; then',
         '    sed -i "s|${LFS}||g" "$specfile"',
         '    log "stripped ${LFS} prefix from ${specfile#${LFS}}"',
         "  fi",
-        "done",
+        'done < <(find "${LFS}" -path "*/gcc/*" -name specs -type f 2>/dev/null)',
         "",
     ]
 
@@ -296,6 +298,11 @@ def _chroot_build_env_preamble() -> list[str]:
         'export PS1="(lfs chroot) \\u:\\w\\$ "',
         'export PATH=/usr/bin:/usr/sbin',
         'export CONFIG_SITE="${CONFIG_SITE:-/usr/share/config.site}"',
+        "if [ -z \"${COMPILER_PATH:-}\" ]; then",
+        "  _cc1=$(find /usr/libexec/gcc /usr/lib/gcc /tools/libexec/gcc \\",
+        "    -name cc1 -type f 2>/dev/null | head -1)",
+        '  [ -n "$_cc1" ] && export COMPILER_PATH="$(dirname "$_cc1")"',
+        "fi",
         "",
     ]
 

@@ -131,9 +131,9 @@ class LFSOrchestrator:
     def _chroot_stage_dir(self) -> Path:
         return self._lfs_stage_dir() / "chroot-runner"
 
-    def _chroot_gcc_env(self) -> list[str]:
+    def _chroot_gcc_env(self, compiler_path: str | None = None) -> list[str]:
         """Minimal env for gcc inside chroot (matches chapter 7)."""
-        return [
+        env = [
             "env",
             "-i",
             "HOME=/root",
@@ -141,34 +141,131 @@ class LFSOrchestrator:
             "LC_ALL=C",
             "LANG=C",
         ]
+        if compiler_path:
+            env.append(f"COMPILER_PATH={compiler_path}")
+        return env
+
+    def _lfs_root(self) -> Path:
+        return Path(self.cfg.lfs_mount)
+
+    def _log_gcc_diagnostics(self) -> None:
+        """Log gcc layout under $LFS to simplify toolchain failures."""
+        lfs = self._lfs_root()
+        self._log("[chroot-runner] gcc diagnostics:")
+        for pattern in ("usr/bin/*gcc*", "usr/bin/cc"):
+            matches = sorted(lfs.glob(pattern))
+            if matches:
+                for path in matches:
+                    self._log(f"  {path.relative_to(lfs)}")
+            else:
+                self._log(f"  (no {pattern})")
+        cc1_files = self._find_cc1_files()
+        if cc1_files:
+            for path in cc1_files[:5]:
+                self._log(f"  cc1: {path.relative_to(lfs)}")
+        else:
+            self._log("  cc1: not found (gcc-pass2 may be incomplete)")
+
+    def _find_cc1_files(self) -> list[Path]:
+        lfs = self._lfs_root()
+        sources = lfs / "sources"
+        found: list[Path] = []
+        for path in lfs.rglob("cc1"):
+            if not path.is_file():
+                continue
+            if sources in path.parents:
+                continue
+            found.append(path)
+
+        def rank(p: Path) -> tuple[int, str]:
+            text = str(p)
+            if "/usr/libexec/gcc/" in text:
+                return (0, text)
+            if "/usr/lib/gcc/" in text:
+                return (1, text)
+            if "/tools/libexec/gcc/" in text:
+                return (2, text)
+            if "/tools/lib/gcc/" in text:
+                return (3, text)
+            return (4, text)
+
+        found.sort(key=rank)
+        return found
+
+    def _discover_gcc_toolchain(self) -> dict[str, object] | None:
+        """Locate cc1 and the compiler directory inside $LFS."""
+        cc1_files = self._find_cc1_files()
+        if not cc1_files:
+            self._log("[chroot-runner] ERROR: no cc1 found under $LFS")
+            self._log_gcc_diagnostics()
+            return None
+
+        cc1 = cc1_files[0]
+        lfs = self._lfs_root()
+        rel = cc1.relative_to(lfs)
+        compiler_path = "/" + rel.parent.as_posix()
+        spec_path = self._spec_path_for_cc1(rel)
+        tools_only = rel.parts[0] == "tools"
+
+        if tools_only:
+            self._log(
+                "[chroot-runner] warning: cc1 is only under /tools; "
+                "chapter 6 gcc-pass2 may not have installed into /usr"
+            )
+
+        return {
+            "cc1": cc1,
+            "compiler_path": compiler_path,
+            "spec_path": spec_path,
+            "tools_only": tools_only,
+        }
+
+    @staticmethod
+    def _spec_path_for_cc1(cc1_rel: Path) -> Path | None:
+        """Map .../libexec/gcc/T/V/cc1 -> .../lib/gcc/T/V/specs."""
+        parts = cc1_rel.parts
+        if len(parts) < 5:
+            return None
+        if parts[1] == "libexec" and parts[2] == "gcc":
+            return Path(parts[0], "lib", "gcc", parts[3], parts[4], "specs")
+        if parts[1] == "lib" and parts[2] == "gcc":
+            return Path(*parts[:-1]) / "specs"
+        return None
+
+    def _ensure_gcc_driver_symlink(self) -> None:
+        """Ensure /usr/bin/gcc exists when only the triplet-prefixed driver is installed."""
+        lfs = self._lfs_root()
+        gcc_bin = lfs / "usr/bin/gcc"
+        if gcc_bin.exists():
+            return
+        drivers = sorted(lfs.glob("usr/bin/*-gcc"))
+        if not drivers:
+            return
+        driver = drivers[0]
+        gcc_bin.symlink_to(driver.name)
+        self._log(
+            f"[chroot-runner] created {gcc_bin.relative_to(lfs)} -> {driver.name}"
+        )
 
     def _fix_gcc_specs(self) -> None:
-        """Rewrite gcc specs so paths work inside chroot (no host $LFS prefix)."""
-        lfs = self.cfg.lfs_mount
+        """Rewrite or create gcc specs so paths work inside chroot."""
         prefix = self.cfg.lfs_mount
-        chroot_cmd = ["chroot", lfs, *self._chroot_gcc_env()]
+        lfs = self._lfs_root()
+        toolchain = self._discover_gcc_toolchain()
+        if toolchain is None:
+            return
 
-        spec_result = subprocess.run(
-            [*chroot_cmd, "gcc", "-print-file-name=specs"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if spec_result.returncode != 0:
-            self._log(
-                "[chroot-runner] warning: gcc -print-file-name=specs failed; "
-                f"trying file scan: {spec_result.stderr.strip()}"
-            )
+        self._ensure_gcc_driver_symlink()
+        compiler_path = str(toolchain["compiler_path"])
+        spec_path = toolchain.get("spec_path")
+        chroot_cmd = ["chroot", lfs, *self._chroot_gcc_env(compiler_path)]
+
+        if spec_path is None:
+            self._log("[chroot-runner] warning: could not derive specs path from cc1")
             self._fix_gcc_specs_by_scan(prefix)
             return
 
-        spec_rel = spec_result.stdout.strip()
-        if not spec_rel or spec_rel == "specs":
-            self._log("[chroot-runner] warning: unexpected specs path; scanning")
-            self._fix_gcc_specs_by_scan(prefix)
-            return
-
-        spec_path = Path(lfs) / spec_rel.lstrip("/")
+        spec_host = lfs / spec_path
         dumpspecs = subprocess.run(
             [*chroot_cmd, "gcc", "-dumpspecs"],
             capture_output=True,
@@ -177,28 +274,30 @@ class LFSOrchestrator:
         )
         if dumpspecs.returncode != 0:
             self._log(
-                "[chroot-runner] warning: gcc -dumpspecs failed; "
-                f"scanning specs files: {dumpspecs.stderr.strip()}"
+                "[chroot-runner] warning: gcc -dumpspecs failed: "
+                f"{dumpspecs.stderr.strip()}"
             )
             self._fix_gcc_specs_by_scan(prefix)
             return
 
         updated = dumpspecs.stdout.replace(prefix, "")
-        spec_path.parent.mkdir(parents=True, exist_ok=True)
-        spec_path.write_text(updated, encoding="utf-8")
+        spec_host.parent.mkdir(parents=True, exist_ok=True)
+        spec_host.write_text(updated, encoding="utf-8")
         self._log(
-            f"[chroot-runner] rewrote gcc specs at "
-            f"{spec_path.relative_to(lfs)} (removed {prefix} prefixes)"
+            f"[chroot-runner] wrote gcc specs at {spec_host.relative_to(lfs)} "
+            f"(COMPILER_PATH={compiler_path})"
         )
 
     def _fix_gcc_specs_by_scan(self, prefix: str) -> None:
         """Fallback: strip the mount prefix from every gcc specs file found."""
-        lfs = Path(self.cfg.lfs_mount)
-        specs_files = [p for p in lfs.glob("usr/lib/gcc/**/specs") if p.is_file()]
+        lfs = self._lfs_root()
+        specs_files = [
+            p
+            for p in lfs.rglob("specs")
+            if p.is_file() and "/gcc/" in p.as_posix() and "sources" not in p.parts
+        ]
         if not specs_files:
-            self._log(
-                f"[chroot-runner] warning: no gcc specs under {lfs}/usr/lib/gcc"
-            )
+            self._log("[chroot-runner] warning: no gcc specs file found to patch")
             return
         for spec in specs_files:
             text = spec.read_text(encoding="utf-8", errors="replace")
@@ -264,6 +363,7 @@ class LFSOrchestrator:
             return [], end, None
 
         self._fix_gcc_specs()
+        toolchain = self._discover_gcc_toolchain()
 
         stage = self._chroot_stage_dir()
         scripts_dir = stage / "scripts"
@@ -295,66 +395,91 @@ class LFSOrchestrator:
             lines.append(f"{entry['id']}|/sources/.lfs-builder-run/chroot-runner/scripts/{dst.name}")
         list_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-        run_script.write_text(
-            "\n".join(
-                [
-                    "#!/bin/bash",
-                    "set -euo pipefail",
-                    'source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"',
-                    'LFS_STEP_ID="chroot-runner"',
-                    "log_begin",
-                    "trap 'log_fail $?; exit 1' ERR",
-                    'LIST="${LFS_BUILDER_SCRIPTS:?}/scripts.list"',
-                    'DONE="${LFS_BUILDER_SCRIPTS:?}/completed.txt"',
-                    'FAILED="${LFS_BUILDER_SCRIPTS:?}/failed_step.txt"',
-                    ': > "${DONE}"',
-                    'rm -f "${FAILED}"',
-                    "",
-                    'export HOME=/root',
-                    'export TERM="${TERM:-linux}"',
-                    'export PS1="(lfs chroot) \\u:\\w\\$ "',
-                    'export PATH=/usr/bin:/usr/sbin',
-                    'export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"',
-                    'export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"',
-                    'export CONFIG_SITE="${CONFIG_SITE:-/usr/share/config.site}"',
-                    'export LC_ALL=C',
-                    'export LANG=C',
-                    "",
-                    '# gcc pass 2 specs may still name the host mount (e.g. /mnt/lfs/...).',
-                    'mkdir -p /mnt',
-                    'if [ ! -e /mnt/lfs ]; then',
-                    '  ln -sf / /mnt/lfs',
-                    "fi",
-                    "",
-                    '_verify_chroot_toolchain() {',
-                    '  local cc1',
-                    '  cc1=$(gcc -print-prog-name=cc1) || true',
-                    '  if [ -z "$cc1" ] || [[ "$cc1" != /* ]] || [ ! -x "$cc1" ]; then',
-                    '    die "gcc cannot run cc1 (got: ${cc1:-<empty>}). Re-run after git pull; specs and /mnt/lfs symlink are fixed automatically."',
-                    "  fi",
-                    '  echo "int main(void){return 0;}" > /tmp/.lfs-cc-test.c',
-                    '  gcc /tmp/.lfs-cc-test.c -o /tmp/.lfs-cc-test || die "gcc test compile failed inside chroot"',
-                    '  /tmp/.lfs-cc-test || die "gcc test binary failed inside chroot"',
-                    '  rm -f /tmp/.lfs-cc-test /tmp/.lfs-cc-test.c',
-                    "}",
-                    "_verify_chroot_toolchain",
-                    "",
-                    'while IFS="|" read -r step_id script_path; do',
-                    '  [[ -z "${step_id}" ]] && continue',
-                    '  log "running ${step_id}"',
-                    '  if ! bash -e "${script_path}"; then',
-                    '    echo "${step_id}" > "${FAILED}"',
-                    "    exit 1",
-                    "  fi",
-                    '  echo "${step_id}" >> "${DONE}"',
-                    'done < "${LIST}"',
-                    "trap - ERR",
-                    "log_done",
-                    "",
-                ]
-            ),
-            encoding="utf-8",
+        path_export = "export PATH=/usr/bin:/usr/sbin"
+        if toolchain and toolchain.get("tools_only"):
+            path_export = "export PATH=/tools/bin:/usr/bin:/usr/sbin"
+        compiler_export = ""
+        if toolchain:
+            compiler_export = (
+                f'export COMPILER_PATH="{toolchain["compiler_path"]}"'
+            )
+
+        runner_lines = [
+            "#!/bin/bash",
+            "set -euo pipefail",
+            'source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"',
+            'LFS_STEP_ID="chroot-runner"',
+            "log_begin",
+            "trap 'log_fail $?; exit 1' ERR",
+            'LIST="${LFS_BUILDER_SCRIPTS:?}/scripts.list"',
+            'DONE="${LFS_BUILDER_SCRIPTS:?}/completed.txt"',
+            'FAILED="${LFS_BUILDER_SCRIPTS:?}/failed_step.txt"',
+            ': > "${DONE}"',
+            'rm -f "${FAILED}"',
+            "",
+            'export HOME=/root',
+            'export TERM="${TERM:-linux}"',
+            'export PS1="(lfs chroot) \\u:\\w\\$ "',
+            path_export,
+        ]
+        if compiler_export:
+            runner_lines.append(compiler_export)
+        runner_lines.extend(
+            [
+                'export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"',
+                'export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"',
+                'export CONFIG_SITE="${CONFIG_SITE:-/usr/share/config.site}"',
+                'export LC_ALL=C',
+                'export LANG=C',
+                "",
+                "mkdir -p /mnt",
+                "if [ ! -e /mnt/lfs ]; then",
+                "  ln -sf / /mnt/lfs",
+                "fi",
+                "",
+                "_resolve_cc1() {",
+                "  local cc1",
+                '  cc1=$(gcc -print-prog-name=cc1 2>/dev/null || true)',
+                '  if [ -n "$cc1" ] && [[ "$cc1" == /* ]] && [ -x "$cc1" ]; then',
+                '    printf "%s\\n" "$cc1"',
+                "    return 0",
+                "  fi",
+                "  find /usr/libexec/gcc /usr/lib/gcc /tools/libexec/gcc /tools/lib/gcc \\",
+                "    -name cc1 -type f 2>/dev/null | head -1",
+                "}",
+                "",
+                "_verify_chroot_toolchain() {",
+                "  local cc1",
+                "  cc1=$(_resolve_cc1 || true)",
+                '  if [ -z "$cc1" ] || [ ! -x "$cc1" ]; then',
+                '    die "gcc cannot run cc1. Check chapter 6 gcc-pass2; see [chroot-runner] gcc diagnostics in the log."',
+                "  fi",
+            ]
         )
+        runner_lines.extend(
+            [
+                '  echo "int main(void){return 0;}" > /tmp/.lfs-cc-test.c',
+                "  gcc /tmp/.lfs-cc-test.c -o /tmp/.lfs-cc-test || die \"gcc test compile failed inside chroot\"",
+                '  /tmp/.lfs-cc-test || die "gcc test binary failed inside chroot"',
+                "  rm -f /tmp/.lfs-cc-test /tmp/.lfs-cc-test.c",
+                "}",
+                "_verify_chroot_toolchain",
+                "",
+                'while IFS="|" read -r step_id script_path; do',
+                '  [[ -z "${step_id}" ]] && continue',
+                '  log "running ${step_id}"',
+                '  if ! bash -e "${script_path}"; then',
+                '    echo "${step_id}" > "${FAILED}"',
+                "    exit 1",
+                "  fi",
+                '  echo "${step_id}" >> "${DONE}"',
+                'done < "${LIST}"',
+                "trap - ERR",
+                "log_done",
+                "",
+            ]
+        )
+        run_script.write_text("\n".join(runner_lines), encoding="utf-8")
         run_script.chmod(0o755)
 
         env = self._env_base()
@@ -368,6 +493,9 @@ class LFSOrchestrator:
         }
         nproc = str(self.cfg.nproc)
         term = chroot_env.get("TERM", "linux")
+        chroot_path = "/tools/bin:/usr/bin:/usr/sbin" if (
+            toolchain and toolchain.get("tools_only")
+        ) else "/usr/bin:/usr/sbin"
         cmd = [
             "chroot",
             self.cfg.lfs_mount,
@@ -376,7 +504,7 @@ class LFSOrchestrator:
             "HOME=/root",
             f"TERM={term}",
             "PS1=(lfs chroot) \\u:\\w\\$ ",
-            "PATH=/usr/bin:/usr/sbin",
+            f"PATH={chroot_path}",
             f"MAKEFLAGS=-j{nproc}",
             f"TESTSUITEFLAGS=-j{nproc}",
             "CONFIG_SITE=/usr/share/config.site",
@@ -384,10 +512,16 @@ class LFSOrchestrator:
             "LANG=C",
             "LFS_BUILDER_SCRIPTS=/sources/.lfs-builder-run/chroot-runner",
             "LFS_SOURCES=/sources",
-            "/bin/bash",
-            "-e",
-            "/sources/.lfs-builder-run/chroot-runner/run-chroot-sequence.sh",
         ]
+        if toolchain:
+            cmd.append(f"COMPILER_PATH={toolchain['compiler_path']}")
+        cmd.extend(
+            [
+                "/bin/bash",
+                "-e",
+                "/sources/.lfs-builder-run/chroot-runner/run-chroot-sequence.sh",
+            ]
+        )
         self._log(
             f"[chroot-runner] executing {len(todo)} step(s): "
             f"{todo[0]['id']} -> {todo[-1]['id']}"
