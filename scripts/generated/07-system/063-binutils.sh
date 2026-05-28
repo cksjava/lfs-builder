@@ -29,18 +29,6 @@ fi
 cd "binutils-2.46.0"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 7 'mkdir -vp build'
 mkdir -vp build
 cd       build
@@ -77,8 +65,6 @@ log_step 7 7 'rm -rfv /usr/lib/lib{bfd,ctf,ctf-nobfd,gprofng,opcodes,sframe}.a \
 rm -rfv /usr/lib/lib{bfd,ctf,ctf-nobfd,gprofng,opcodes,sframe}.a \
         /usr/share/doc/gprofng/
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree binutils-2.46.0"
 rm -rf "binutils-2.46.0"

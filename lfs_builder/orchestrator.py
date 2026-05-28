@@ -128,6 +128,9 @@ class LFSOrchestrator:
     def _lfs_stage_dir(self) -> Path:
         return Path(self.cfg.sources) / ".lfs-builder-run"
 
+    def _chroot_stage_dir(self) -> Path:
+        return self._lfs_stage_dir() / "chroot-runner"
+
     def _stage_script_for_lfs_user(self, script: Path) -> tuple[Path, Path]:
         """Copy script and lib under $LFS/sources so user lfs can read them."""
         stage_dir = self._lfs_stage_dir()
@@ -169,6 +172,121 @@ class LFSOrchestrator:
             return
         self._log("moving /etc/bash.bashrc -> /etc/bash.bashrc.NOUSE")
         shutil.move(bashrc, nouse)
+
+    def _run_chroot_batch(self, start_index: int) -> tuple[list[str], int, str | None]:
+        """Run a contiguous chroot=true range inside one chroot session."""
+        end = start_index
+        while end < len(self._steps) and self._steps[end].get("chroot"):
+            end += 1
+
+        block = self._steps[start_index:end]
+        todo = [e for e in block if e["id"] not in self._state.get("completed", [])]
+        if not todo:
+            return [], end, None
+
+        stage = self._chroot_stage_dir()
+        scripts_dir = stage / "scripts"
+        lib_dir = stage / "lib"
+        scripts_dir.mkdir(parents=True, exist_ok=True)
+        lib_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(self.scripts_dir / "lib" / "common.sh", lib_dir / "common.sh")
+        (lib_dir / "common.sh").chmod(0o644)
+
+        list_path = stage / "scripts.list"
+        completed_path = stage / "completed.txt"
+        failed_path = stage / "failed_step.txt"
+        run_script = stage / "run-chroot-sequence.sh"
+        try:
+            completed_path.unlink()
+        except FileNotFoundError:
+            pass
+        try:
+            failed_path.unlink()
+        except FileNotFoundError:
+            pass
+
+        lines: list[str] = []
+        for entry in todo:
+            src = self._script_path(entry)
+            dst = scripts_dir / src.name
+            shutil.copy2(src, dst)
+            dst.chmod(0o755)
+            lines.append(f"{entry['id']}|/sources/.lfs-builder-run/chroot-runner/scripts/{dst.name}")
+        list_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        run_script.write_text(
+            "\n".join(
+                [
+                    "#!/bin/bash",
+                    "set -euo pipefail",
+                    'source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"',
+                    'LFS_STEP_ID="chroot-runner"',
+                    "log_begin",
+                    'trap \'log_fail $?\' ERR',
+                    'LIST="${LFS_BUILDER_SCRIPTS:?}/scripts.list"',
+                    'DONE="${LFS_BUILDER_SCRIPTS:?}/completed.txt"',
+                    'FAILED="${LFS_BUILDER_SCRIPTS:?}/failed_step.txt"',
+                    ': > "${DONE}"',
+                    'rm -f "${FAILED}"',
+                    "",
+                    'while IFS="|" read -r step_id script_path; do',
+                    '  [[ -z "${step_id}" ]] && continue',
+                    '  log "running ${step_id}"',
+                    '  if bash -e "${script_path}"; then',
+                    '    echo "${step_id}" >> "${DONE}"',
+                    "  else",
+                    '    echo "${step_id}" > "${FAILED}"',
+                    "    exit 1",
+                    "  fi",
+                    'done < "${LIST}"',
+                    "trap - ERR",
+                    "log_done",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        run_script.chmod(0o755)
+
+        env = self._env_base()
+        chroot_env = {
+            **os.environ,
+            **env,
+            "LFS_BUILDER_SCRIPTS": "/sources/.lfs-builder-run/chroot-runner",
+            "LFS_SOURCES": "/sources",
+        }
+        cmd = [
+            "chroot",
+            self.cfg.lfs_mount,
+            "/bin/bash",
+            "-e",
+            "/sources/.lfs-builder-run/chroot-runner/run-chroot-sequence.sh",
+        ]
+        self._log(
+            f"[chroot-runner] executing {len(todo)} step(s): "
+            f"{todo[0]['id']} -> {todo[-1]['id']}"
+        )
+        rc = subprocess.call(cmd, env=chroot_env)
+
+        completed_ids: list[str] = []
+        if completed_path.exists():
+            completed_ids = [
+                ln.strip()
+                for ln in completed_path.read_text(encoding="utf-8").splitlines()
+                if ln.strip()
+            ]
+
+        failed_id: str | None = None
+        if failed_path.exists():
+            text = failed_path.read_text(encoding="utf-8").strip()
+            failed_id = text or None
+        elif rc != 0:
+            # Defensive fallback if runner failed before writing failed_step.txt
+            for entry in todo:
+                if entry["id"] not in completed_ids:
+                    failed_id = entry["id"]
+                    break
+        return completed_ids, end, failed_id
 
     def _run_step(self, index: int, entry: dict) -> None:
         step_id = entry["id"]
@@ -232,9 +350,30 @@ class LFSOrchestrator:
         start = from_step if from_step is not None else self._state.get("step_index", 0)
         self._log(f"Starting LFS build from step {start + 1}")
 
-        for i in range(start, len(self._steps)):
+        i = start
+        while i < len(self._steps):
             entry = self._steps[i]
             if entry["id"] in self._state.get("completed", []):
+                i += 1
+                continue
+            if entry.get("chroot"):
+                completed_ids, end, failed_id = self._run_chroot_batch(i)
+                for sid in completed_ids:
+                    if sid not in self._state.setdefault("completed", []):
+                        self._state["completed"].append(sid)
+                if failed_id:
+                    failed_idx = i
+                    for j in range(i, end):
+                        if self._steps[j]["id"] == failed_id:
+                            failed_idx = j
+                            break
+                    self._state["step_index"] = failed_idx
+                    self._save_state()
+                    self._log(f"\n[FAILED] Step {failed_id}: chroot batch failed")
+                    raise subprocess.CalledProcessError(1, failed_id)
+                self._state["step_index"] = end
+                self._save_state()
+                i = end
                 continue
             try:
                 self._run_step(i, entry)
@@ -246,6 +385,7 @@ class LFSOrchestrator:
             self._state.setdefault("completed", []).append(entry["id"])
             self._state["step_index"] = i + 1
             self._save_state()
+            i += 1
 
         self._log("\n*** LFS build completed successfully ***")
         self._log("Unmount and reboot per chapter 11 when ready.")

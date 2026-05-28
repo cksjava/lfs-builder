@@ -29,18 +29,6 @@ fi
 cd "gettext-1.0"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 3 'configure'
 ./configure --disable-shared
 
@@ -50,8 +38,6 @@ make
 log_step 3 3 'cp -v gettext-tools/src/{msgfmt,msgmerge,xgettext} /usr/bin'
 cp -v gettext-tools/src/{msgfmt,msgmerge,xgettext} /usr/bin
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree gettext-1.0"
 rm -rf "gettext-1.0"

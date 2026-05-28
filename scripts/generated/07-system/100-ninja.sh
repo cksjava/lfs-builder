@@ -29,18 +29,6 @@ fi
 cd "ninja-1.13.2"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 3 'sed -i '"'"'/int Guess/a \'
 sed -i '/int Guess/a \
   int   j = 0;\
@@ -57,8 +45,6 @@ install -vm755 ninja /usr/bin/
 install -vDm644 misc/bash-completion /usr/share/bash-completion/completions/ninja
 install -vDm644 misc/zsh-completion  /usr/share/zsh/site-functions/_ninja
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree ninja-1.13.2"
 rm -rf "ninja-1.13.2"

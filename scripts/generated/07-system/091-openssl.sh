@@ -29,18 +29,6 @@ fi
 cd "openssl-3.6.1"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 6 './config --prefix=/usr         \'
 ./config --prefix=/usr         \
          --openssldir=/etc/ssl \
@@ -64,8 +52,6 @@ mv -v /usr/share/doc/openssl /usr/share/doc/openssl-3.6.1
 log_step 6 6 'cp -vfr doc/* /usr/share/doc/openssl-3.6.1'
 cp -vfr doc/* /usr/share/doc/openssl-3.6.1
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree openssl-3.6.1"
 rm -rf "openssl-3.6.1"

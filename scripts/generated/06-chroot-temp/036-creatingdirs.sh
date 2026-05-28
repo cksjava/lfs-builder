@@ -9,18 +9,6 @@ LFS_STEP_ID="06-chroot-temp/creatingdirs"
 log_begin
 trap 'log_fail $?' ERR
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 4 'mkdir -pv /{boot,home,mnt,opt,srv}'
 mkdir -pv /{boot,home,mnt,opt,srv}
 
@@ -45,8 +33,6 @@ log_step 4 4 'install -dv -m 0750 /root'
 install -dv -m 0750 /root
 install -dv -m 1777 /tmp /var/tmp
 
-CHROOT_EOF
-log "left chroot"
 trap - ERR
 log_done
 

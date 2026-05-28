@@ -29,18 +29,6 @@ fi
 cd "tar-1.35"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 4 'configure'
 FORCE_UNSAFE_CONFIGURE=1  \
 ./configure --prefix=/usr
@@ -59,8 +47,6 @@ log_step 4 4 'make install'
 make install
 make -C doc install-html docdir=/usr/share/doc/tar-1.35
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree tar-1.35"
 rm -rf "tar-1.35"

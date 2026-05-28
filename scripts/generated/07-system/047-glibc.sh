@@ -29,18 +29,6 @@ fi
 cd "glibc-2.43"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 32 'apply patch'
 patch -Np1 -i ../glibc-fhs-1.patch
 
@@ -207,8 +195,6 @@ log_step 32 32 'EOF'
 EOF
 mkdir -pv /etc/ld.so.conf.d
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree glibc-2.43"
 rm -rf "glibc-2.43"

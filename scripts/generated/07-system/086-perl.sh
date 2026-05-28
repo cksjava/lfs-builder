@@ -29,18 +29,6 @@ fi
 cd "perl-5.42.0"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 5 'export BUILD_ZLIB=False'
 export BUILD_ZLIB=False
 export BUILD_BZIP2=0
@@ -71,8 +59,6 @@ log_step 5 5 'make install'
 make install
 unset BUILD_ZLIB BUILD_BZIP2
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree perl-5.42.0"
 rm -rf "perl-5.42.0"

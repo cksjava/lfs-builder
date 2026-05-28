@@ -29,18 +29,6 @@ fi
 cd "bash-5.3"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 6 'configure'
 ./configure --prefix=/usr             \
             --without-bash-malloc     \
@@ -68,8 +56,6 @@ make install
 log_step 6 6 'exec /usr/bin/bash --login'
 exec /usr/bin/bash --login
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree bash-5.3"
 rm -rf "bash-5.3"

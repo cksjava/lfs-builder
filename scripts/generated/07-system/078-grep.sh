@@ -29,18 +29,6 @@ fi
 cd "grep-3.12"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 5 'sed -i "s/echo/#echo/" src/egrep.sh'
 sed -i "s/echo/#echo/" src/egrep.sh
 
@@ -60,8 +48,6 @@ fi
 log_step 5 5 'make install'
 make install
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree grep-3.12"
 rm -rf "grep-3.12"

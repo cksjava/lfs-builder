@@ -29,18 +29,6 @@ fi
 cd "flex-2.6.4"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 5 'configure'
 ./configure --prefix=/usr    \
             --disable-static \
@@ -63,8 +51,6 @@ log_step 5 5 'ln -svf flex   /usr/bin/lex'
 ln -svf flex   /usr/bin/lex
 ln -svf flex.1 /usr/share/man/man1/lex.1
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree flex-2.6.4"
 rm -rf "flex-2.6.4"

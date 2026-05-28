@@ -9,18 +9,6 @@ LFS_STEP_ID="07-system/cleanup"
 log_begin
 trap 'log_fail $?' ERR
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 4 'rm -rf /tmp/{*,.*}'
 rm -rf /tmp/{*,.*}
 
@@ -33,8 +21,6 @@ find /usr -depth -name $(uname -m)-lfs-linux-gnu\* | xargs rm -rf
 log_step 4 4 'userdel -r tester'
 userdel -r tester
 
-CHROOT_EOF
-log "left chroot"
 trap - ERR
 log_done
 

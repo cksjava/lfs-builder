@@ -29,18 +29,6 @@ fi
 cd "libxcrypt-4.5.2"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 6 'sed -i '"'"'/strchr/s/const//'"'"' lib/crypt-{sm3,gost}-yescrypt.c'
 sed -i '/strchr/s/const//' lib/crypt-{sm3,gost}-yescrypt.c
 
@@ -74,8 +62,6 @@ make distclean
 make
 cp -av --remove-destination .libs/libcrypt.so.1* /usr/lib
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree libxcrypt-4.5.2"
 rm -rf "libxcrypt-4.5.2"

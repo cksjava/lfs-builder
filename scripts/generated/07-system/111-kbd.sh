@@ -29,18 +29,6 @@ fi
 cd "kbd-2.9.0"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 7 'apply patch'
 patch -Np1 -i ../kbd-2.9.0-backspace-1.patch
 
@@ -67,8 +55,6 @@ make install
 log_step 7 7 'cp -R -v docs/doc -T /usr/share/doc/kbd-2.9.0'
 cp -R -v docs/doc -T /usr/share/doc/kbd-2.9.0
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree kbd-2.9.0"
 rm -rf "kbd-2.9.0"

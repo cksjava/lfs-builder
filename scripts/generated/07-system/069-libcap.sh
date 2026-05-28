@@ -29,18 +29,6 @@ fi
 cd "libcap-2.77"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 4 'sed -i '"'"'/install -m.*STA/d'"'"' libcap/Makefile'
 sed -i '/install -m.*STA/d' libcap/Makefile
 
@@ -53,8 +41,6 @@ make test
 log_step 4 4 'make'
 make prefix=/usr lib=lib install
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree libcap-2.77"
 rm -rf "libcap-2.77"

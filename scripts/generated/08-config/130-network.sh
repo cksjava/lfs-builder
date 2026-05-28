@@ -9,18 +9,6 @@ LFS_STEP_ID="08-config/network"
 log_begin
 trap 'log_fail $?' ERR
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 17 'systemctl disable systemd-networkd-wait-online'
 systemctl disable systemd-networkd-wait-online
 
@@ -98,8 +86,6 @@ log_step 17 17 '# End /etc/hosts'
 # End /etc/hosts
 EOF
 
-CHROOT_EOF
-log "left chroot"
 trap - ERR
 log_done
 

@@ -9,18 +9,6 @@ LFS_STEP_ID="08-config/clock"
 log_begin
 trap 'log_fail $?' ERR
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 6 'write configuration file'
 cat > /etc/adjtime << "EOF"
 0.0 0 0.0
@@ -43,8 +31,6 @@ timedatectl list-timezones
 log_step 6 6 'systemctl disable systemd-timesyncd'
 systemctl disable systemd-timesyncd
 
-CHROOT_EOF
-log "left chroot"
 trap - ERR
 log_done
 

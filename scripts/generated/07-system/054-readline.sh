@@ -29,18 +29,6 @@ fi
 cd "readline-8.3"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 7 'sed -i '"'"'/MV.*old/d'"'"' Makefile.in'
 sed -i '/MV.*old/d' Makefile.in
 sed -i '/{OLDSUFF}/c:' support/shlib-install
@@ -70,8 +58,6 @@ make install
 log_step 7 7 'install -v -m644 doc/*.{ps,pdf,html,dvi} /usr/share/doc/readline-8.3'
 install -v -m644 doc/*.{ps,pdf,html,dvi} /usr/share/doc/readline-8.3
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree readline-8.3"
 rm -rf "readline-8.3"

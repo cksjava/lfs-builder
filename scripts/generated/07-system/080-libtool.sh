@@ -29,18 +29,6 @@ fi
 cd "libtool-2.5.4"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 5 'configure'
 ./configure --prefix=/usr
 
@@ -60,8 +48,6 @@ make install
 log_step 5 5 'rm -fv /usr/lib/libltdl.a'
 rm -fv /usr/lib/libltdl.a
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree libtool-2.5.4"
 rm -rf "libtool-2.5.4"

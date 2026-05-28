@@ -29,18 +29,6 @@ fi
 cd "dbus-1.16.2"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 6 'mkdir p build'
 mkdir p build
 cd    build
@@ -60,8 +48,6 @@ ninja install
 log_step 6 6 'ln -sfv /etc/machine-id /var/lib/dbus'
 ln -sfv /etc/machine-id /var/lib/dbus
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree dbus-1.16.2"
 rm -rf "dbus-1.16.2"

@@ -29,18 +29,6 @@ fi
 cd "tcl8.6.17"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 13 'configure'
 SRCDIR=$(pwd)
 cd unix
@@ -97,8 +85,6 @@ tar -xf ../tcl8.6.17-html.tar.gz --strip-components=1
 mkdir -vp -p /usr/share/doc/tcl-8.6.17
 cp -v -r  ./html/* /usr/share/doc/tcl-8.6.17
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree tcl8.6.17"
 rm -rf "tcl8.6.17"

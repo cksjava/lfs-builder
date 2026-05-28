@@ -9,18 +9,6 @@ LFS_STEP_ID="06-chroot-temp/cleanup"
 log_begin
 trap 'log_fail $?' ERR
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 6 'rm -rf /usr/share/{info,man,doc}/*'
 rm -rf /usr/share/{info,man,doc}/*
 
@@ -42,8 +30,6 @@ log_step 6 6 'extract source archive'
 cd $LFS
 tar -cJpf $HOME/lfs-temp-tools-13.0-systemd.tar.xz .
 
-CHROOT_EOF
-log "left chroot"
 trap - ERR
 log_done
 

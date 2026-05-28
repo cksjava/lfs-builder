@@ -273,25 +273,6 @@ def _package_postamble(source: PackageSource, step_id: str) -> list[str]:
     ]
 
 
-def _wrap_chroot(body_lines: list[str]) -> list[str]:
-    body = "\n".join(body_lines)
-    return [
-        'require_var LFS',
-        'log "entering chroot at ${LFS}"',
-        'chroot "${LFS}" /bin/bash -euo pipefail <<\'CHROOT_EOF\'',
-        'export HOME=/root',
-        'export TERM="${TERM:-linux}"',
-        'export PS1="(lfs chroot) \\u:\\w\\$ "',
-        'export PATH=/usr/bin:/usr/sbin',
-        'export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"',
-        'export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"',
-        "",
-        body,
-        "CHROOT_EOF",
-        'log "left chroot"',
-    ]
-
-
 def generate_step_script(
     book_path: Path,
     step: BuildStep,
@@ -364,11 +345,10 @@ def generate_step_script(
         body = ['echo "WARNING: no commands extracted"']
 
     if body:
-        logged = _emit_logged_commands(body, chroot=step.chroot)
-        if step.chroot:
-            lines.extend(_wrap_chroot(logged))
-        else:
-            lines.extend(logged)
+        # Chroot steps are executed by a phase runner inside chroot.
+        # Generated scripts should contain only in-chroot commands.
+        logged = _emit_logged_commands(body, chroot=False)
+        lines.extend(logged)
 
     if pkg_source is not None:
         lines.extend(_package_postamble(pkg_source, step.id))
@@ -393,6 +373,11 @@ def generate_all(
     sources = package_sources or load_package_sources()
     manifest_steps = build_manifest(book_path)
     entries: list[dict] = []
+
+    # Avoid stale generated scripts when sequence numbers change.
+    if output_dir.exists():
+        for sh in output_dir.glob("**/*.sh"):
+            sh.unlink()
 
     for index, step in enumerate(manifest_steps):
         seq = index + 1

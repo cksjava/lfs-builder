@@ -29,18 +29,6 @@ fi
 cd "e2fsprogs-1.47.3"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 9 'mkdir -vp build'
 mkdir -vp build
 cd       build
@@ -82,8 +70,6 @@ install-info --dir-file=/usr/share/info/dir /usr/share/info/com_err.info
 log_step 9 9 'sed '"'"'s/metadata_csum_seed,//'"'"' -i /etc/mke2fs.conf'
 sed 's/metadata_csum_seed,//' -i /etc/mke2fs.conf
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree e2fsprogs-1.47.3"
 rm -rf "e2fsprogs-1.47.3"

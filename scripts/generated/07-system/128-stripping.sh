@@ -9,18 +9,6 @@ LFS_STEP_ID="07-system/stripping"
 log_begin
 trap 'log_fail $?' ERR
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 8 'save_usrlib="$(cd /usr/lib; ls ld-linux*[^g])'
 save_usrlib="$(cd /usr/lib; ls ld-linux*[^g])
              libc.so.6
@@ -86,8 +74,6 @@ done
 log_step 8 8 'unset BIN LIB save_usrlib online_usrbin online_usrlib'
 unset BIN LIB save_usrlib online_usrbin online_usrlib
 
-CHROOT_EOF
-log "left chroot"
 trap - ERR
 log_done
 

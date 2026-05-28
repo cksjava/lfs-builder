@@ -29,18 +29,6 @@ fi
 cd "iproute2-6.18.0"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 4 'sed -i /ARPD/d Makefile'
 sed -i /ARPD/d Makefile
 rm -fv man/man8/arpd.8
@@ -54,8 +42,6 @@ make SBINDIR=/usr/sbin install
 log_step 4 4 'install -vDm644 COPYING README* -t /usr/share/doc/iproute2-6.18.0'
 install -vDm644 COPYING README* -t /usr/share/doc/iproute2-6.18.0
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree iproute2-6.18.0"
 rm -rf "iproute2-6.18.0"

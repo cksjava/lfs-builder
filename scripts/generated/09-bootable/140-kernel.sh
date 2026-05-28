@@ -25,18 +25,6 @@ fi
 cd "linux-6.18.10"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 11 'make'
 make mrproper
 
@@ -74,8 +62,6 @@ log_step 11 11 '# End /etc/modprobe.d/usb.conf'
 # End /etc/modprobe.d/usb.conf
 EOF
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree linux-6.18.10"
 rm -rf "linux-6.18.10"

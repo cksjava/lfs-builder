@@ -29,18 +29,6 @@ fi
 cd "zstd-1.5.7"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 4 'make'
 make prefix=/usr
 
@@ -57,8 +45,6 @@ make prefix=/usr install
 log_step 4 4 'rm -v /usr/lib/libzstd.a'
 rm -v /usr/lib/libzstd.a
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree zstd-1.5.7"
 rm -rf "zstd-1.5.7"

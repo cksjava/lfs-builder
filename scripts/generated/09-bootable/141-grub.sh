@@ -9,18 +9,6 @@ LFS_STEP_ID="09-bootable/grub"
 log_begin
 trap 'log_fail $?' ERR
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 5 'cd /tmp'
 cd /tmp
 grub-mkrescue --output=grub-img.iso
@@ -47,8 +35,6 @@ menuentry "GNU/Linux, Linux 6.18.10-lfs-13.0-systemd" {
 }
 EOF
 
-CHROOT_EOF
-log "left chroot"
 trap - ERR
 log_done
 

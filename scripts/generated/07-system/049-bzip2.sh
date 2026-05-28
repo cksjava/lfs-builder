@@ -29,18 +29,6 @@ fi
 cd "bzip2-1.0.8"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 10 'apply patch'
 patch -Np1 -i ../bzip2-1.0.8-install_docs-1.patch
 
@@ -76,8 +64,6 @@ done
 log_step 10 10 'rm -fv /usr/lib/libbz2.a'
 rm -fv /usr/lib/libbz2.a
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree bzip2-1.0.8"
 rm -rf "bzip2-1.0.8"

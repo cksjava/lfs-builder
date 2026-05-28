@@ -29,18 +29,6 @@ fi
 cd "expect5.45.4"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 6 'python3 -c '"'"'from pty import spawn; spawn(["echo", "ok"])'"'"''
 python3 -c 'from pty import spawn; spawn(["echo", "ok"])'
 
@@ -65,8 +53,6 @@ log_step 6 6 'make install'
 make install
 ln -sfvf expect5.45.4/libexpect5.45.4.so /usr/lib
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree expect5.45.4"
 rm -rf "expect5.45.4"

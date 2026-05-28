@@ -29,18 +29,6 @@ fi
 cd "sqlite-autoconf-3510200"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 5 'extract source archive'
 tar -xf ../sqlite-doc-3510200.tar.xz
 
@@ -63,8 +51,6 @@ log_step 5 5 'install -v -m755 -d /usr/share/doc/sqlite-3.51.2'
 install -v -m755 -d /usr/share/doc/sqlite-3.51.2
 cp -v -R sqlite-doc-3510200/* /usr/share/doc/sqlite-3.51.2
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree sqlite-autoconf-3510200"
 rm -rf "sqlite-autoconf-3510200"

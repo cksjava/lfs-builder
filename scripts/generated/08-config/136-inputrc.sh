@@ -9,18 +9,6 @@ LFS_STEP_ID="08-config/inputrc"
 log_begin
 trap 'log_fail $?' ERR
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 11 'write configuration file'
 cat > /etc/inputrc << "EOF"
 # Begin /etc/inputrc
@@ -76,8 +64,6 @@ log_step 11 11 '# End /etc/inputrc'
 # End /etc/inputrc
 EOF
 
-CHROOT_EOF
-log "left chroot"
 trap - ERR
 log_done
 

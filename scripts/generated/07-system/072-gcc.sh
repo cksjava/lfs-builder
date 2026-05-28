@@ -29,18 +29,6 @@ fi
 cd "gcc-15.2.0"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 22 'sed -i '"'"'s/char [*]q/const &/'"'"' libgomp/affinity-fmt.c'
 sed -i 's/char [*]q/const &/' libgomp/affinity-fmt.c
 
@@ -131,8 +119,6 @@ log_step 22 22 'mkdir -pv /usr/share/gdb/auto-load/usr/lib'
 mkdir -pv /usr/share/gdb/auto-load/usr/lib
 mv -v /usr/lib/*gdb.py /usr/share/gdb/auto-load/usr/lib
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree gcc-15.2.0"
 rm -rf "gcc-15.2.0"

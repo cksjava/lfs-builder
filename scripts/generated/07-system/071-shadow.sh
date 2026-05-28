@@ -29,18 +29,6 @@ fi
 cd "shadow-4.19.3"
 log "Building in $(pwd)"
 
-require_var LFS
-log "entering chroot at ${LFS}"
-chroot "${LFS}" /bin/bash -euo pipefail <<'CHROOT_EOF'
-export HOME=/root
-export TERM="${TERM:-linux}"
-export PS1="(lfs chroot) \u:\w\$ "
-export PATH=/usr/bin:/usr/sbin
-export MAKEFLAGS="${MAKEFLAGS:--j$(nproc)}"
-export TESTSUITEFLAGS="${TESTSUITEFLAGS:--j$(nproc)}"
-
-log() { echo "[lfs-chroot $(date +%H:%M:%S)] $*"; }
-
 log_step 1 9 'sed -i '"'"'s/groups$(EXEEXT) //'"'"' src/Makefile.in'
 sed -i 's/groups$(EXEEXT) //' src/Makefile.in
 find man -name Makefile.in -exec sed -i 's/groups\.1 / /'   {} \;
@@ -82,8 +70,6 @@ useradd -D --gid 999
 log_step 9 9 'sed -i '"'"'/MAIL/s/yes/no/'"'"' /etc/default/useradd'
 sed -i '/MAIL/s/yes/no/' /etc/default/useradd
 
-CHROOT_EOF
-log "left chroot"
 cd "${LFS_SOURCES:?}"
 log "Removing source tree shadow-4.19.3"
 rm -rf "shadow-4.19.3"
