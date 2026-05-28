@@ -47,6 +47,11 @@ def _filter_commands(step: BuildStep, commands: list[str]) -> list[str]:
             continue
         if step.id == "kernel" and "menuconfig" in cmd:
             continue
+        stripped = cmd.strip()
+        if stripped in ("/bin/bash --login", "exec /usr/bin/bash --login"):
+            continue
+        if re.match(r"^exec\s+/\S*bash\S*\s+--login", stripped):
+            continue
         out.append(cmd)
     return out
 
@@ -202,7 +207,7 @@ def _script_header(step: BuildStep, meta_name: str | None) -> list[str]:
             lib,
             f'LFS_STEP_ID="{step.phase}/{step.id}"',
             "log_begin",
-            'trap \'log_fail $?\' ERR',
+            "trap 'log_fail $?; exit 1' ERR",
             "",
         ]
     )
@@ -263,6 +268,18 @@ def _package_source_for_step(
             build_dir=entry["build_dir"],
         )
     return None
+
+
+def _chroot_build_env_preamble() -> list[str]:
+    """Environment for chapter 7+ commands inside chroot (see chroot.html)."""
+    return [
+        'export HOME=/root',
+        'export TERM="${TERM:-linux}"',
+        'export PS1="(lfs chroot) \\u:\\w\\$ "',
+        'export PATH=/usr/bin:/usr/sbin',
+        'export CONFIG_SITE="${CONFIG_SITE:-/usr/share/config.site}"',
+        "",
+    ]
 
 
 def _package_postamble(source: PackageSource, step_id: str) -> list[str]:
@@ -335,7 +352,7 @@ def generate_step_script(
         lines.append('chmod 755 "${LFS}"')
         lines.extend(_script_footer())
     elif step.chroot:
-        pass
+        lines.extend(_chroot_build_env_preamble())
     else:
         lines.append('require_var LFS')
         lines.append("")
@@ -421,7 +438,7 @@ set -euo pipefail
 source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"
 LFS_STEP_ID="09-bootable/kernel-host-config"
 log_begin
-trap 'log_fail $?' ERR
+trap 'log_fail $?; exit 1' ERR
 
 require_var LFS_SOURCES
 log_step 1 4 "locate Linux source tree"

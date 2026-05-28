@@ -7,18 +7,24 @@ set -euo pipefail
 source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"
 LFS_STEP_ID="06-chroot-temp/createfiles"
 log_begin
-trap 'log_fail $?' ERR
+trap 'log_fail $?; exit 1' ERR
 
-log_step 1 7 'ln -svf /proc/self/mounts /etc/mtab'
+export HOME=/root
+export TERM="${TERM:-linux}"
+export PS1="(lfs chroot) \u:\w\$ "
+export PATH=/usr/bin:/usr/sbin
+export CONFIG_SITE="${CONFIG_SITE:-/usr/share/config.site}"
+
+log_step 1 6 'ln -svf /proc/self/mounts /etc/mtab'
 ln -svf /proc/self/mounts /etc/mtab
 
-log_step 2 7 'write configuration file'
+log_step 2 6 'write configuration file'
 cat > /etc/hosts << EOF
 127.0.0.1  localhost $(hostname)
 ::1        localhost
 EOF
 
-log_step 3 7 'write configuration file'
+log_step 3 6 'write configuration file'
 cat > /etc/passwd << "EOF"
 root:x:0:0:root:/root:/bin/bash
 bin:x:1:1:bin:/dev/null:/usr/bin/false
@@ -36,7 +42,7 @@ systemd-oom:x:81:81:systemd Out Of Memory Daemon:/:/usr/bin/false
 nobody:x:65534:65534:Unprivileged User:/dev/null:/usr/bin/false
 EOF
 
-log_step 4 7 'write configuration file'
+log_step 4 6 'write configuration file'
 cat > /etc/group << "EOF"
 root:x:0:
 bin:x:1:daemon
@@ -74,15 +80,12 @@ users:x:999:
 nogroup:x:65534:
 EOF
 
-log_step 5 7 'echo "tester:x:101:101::/home/tester:/bin/bash" >> /etc/passwd'
+log_step 5 6 'echo "tester:x:101:101::/home/tester:/bin/bash" >> /etc/passwd'
 echo "tester:x:101:101::/home/tester:/bin/bash" >> /etc/passwd
 echo "tester:x:101:" >> /etc/group
 install -o tester -d /home/tester
 
-log_step 6 7 'exec /usr/bin/bash --login'
-exec /usr/bin/bash --login
-
-log_step 7 7 'touch /var/log/{btmp,lastlog,faillog,wtmp}'
+log_step 6 6 'touch /var/log/{btmp,lastlog,faillog,wtmp}'
 touch /var/log/{btmp,lastlog,faillog,wtmp}
 chgrp -v utmp /var/log/lastlog
 chmod -v 664  /var/log/lastlog

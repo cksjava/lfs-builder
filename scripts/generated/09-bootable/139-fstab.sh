@@ -7,7 +7,13 @@ set -euo pipefail
 source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"
 LFS_STEP_ID="09-bootable/fstab"
 log_begin
-trap 'log_fail $?' ERR
+trap 'log_fail $?; exit 1' ERR
+
+export HOME=/root
+export TERM="${TERM:-linux}"
+export PS1="(lfs chroot) \u:\w\$ "
+export PATH=/usr/bin:/usr/sbin
+export CONFIG_SITE="${CONFIG_SITE:-/usr/share/config.site}"
 
 log_step 1 4 'write configuration file'
 cat > /etc/fstab << "EOF"

@@ -7,7 +7,7 @@ set -euo pipefail
 source "${LFS_BUILDER_SCRIPTS:?}/lib/common.sh"
 LFS_STEP_ID="03-toolchain-prep/environment"
 log_begin
-trap 'log_fail $?' ERR
+trap 'log_fail $?; exit 1' ERR
 
 require_var LFS
 
