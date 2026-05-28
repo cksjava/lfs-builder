@@ -23,7 +23,7 @@ FORCE=0
 
 usage() {
   cat <<EOF
-Download LFS sources and patches in one tarball (lfs-packages-VERSION.tar).
+Download LFS sources and patches in one tarball (lfs-packages-VERSION.tar) via axel (100 connections).
 
   $0                         Download to ../sources-cache/ (version from ../13.0/)
   $0 --dest DIR              Extract packages into DIR
